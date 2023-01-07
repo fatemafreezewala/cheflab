@@ -1,0 +1,4605 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useIsFocused} from '@react-navigation/native';
+import moment from 'moment';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  ImageBackground,
+  LayoutAnimation,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import ShimmerPlaceHolder from 'react-native-shimmer-placeholder';
+import {SwiperFlatList} from 'react-native-swiper-flatlist';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import {useDispatch, useSelector} from 'react-redux';
+import {COLORS, icons, SIZES} from '../../../constants';
+import {horizScale} from '../../../constants/themes';
+import ApiCall from '../../../network/ApiCall';
+import {API_END_POINTS} from '../../../network/ApiEndpoints';
+import {
+  addItemToCart,
+  releaseVendorId,
+  removeItemCart,
+} from '../../../redux/actions';
+import RadioButtons from '../../../utils/AddItemRadioButton';
+import {
+  ShowConsole,
+  ShowMessage,
+  validateMobileNumber,
+} from '../../../utils/Utility';
+import {ExpandableComponentSkeleton} from '../utils/ExpandableComponent';
+import style from './style';
+import Loader from '../../../utils/Loader';
+
+const RestaurantDetails = ({navigation, route}) => {
+  // setTimeout(() => this.flatListRef.scrollToIndex({ index: 4 }), 3000);
+  const flatListRef = useRef();
+
+  const dispatch = useDispatch();
+  // const arr = useSelector(state => state.state);
+  // ShowConsole('arr -> ', JSON.stringify(arr));
+
+  const [bookNowLoading, setBookNowLoading] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+  const [shimmerLoading, setShimmerLoading] = useState(false);
+
+  const [addloading, setaddLoading] = useState(false);
+  const [apiToken, setApiToken] = useState('');
+  const [browseMenuData, setBrowseMenuData] = useState([]);
+  const [optionAddonData, setOptionAddonData] = useState({});
+  const [detailsData, setDetailsData] = useState([]);
+  const [cuisinesData, setCuisinesData] = useState([]);
+  const isFocused = useIsFocused();
+
+  const [receivedItem, setReceivedItem] = useState({});
+  const [favorite, setFavorite] = useState(false);
+
+  const [bookTable, setBookTable] = useState(false);
+
+  const [menuIndex, setMenuIndex] = useState(0);
+  const menuIndexRef = useRef();
+
+  // useEffect(() => {
+  // console.log('hello world -> ', menuIndex);
+  // menuIndexRef?.current?.scrollToIndex({
+  //   menuIndex,
+  //   animated: true,
+  // });
+  // }, [menuIndex]);
+
+  useEffect(() => {
+    let {id} = route.params;
+    // console.log('hello iddddddddddddddddddddddd -> ', JSON.stringify(id));
+
+    getInfoFromStorage(id);
+    // getNextSevenDays();
+    if (isFocused) {
+      getInfoFromStorage(id);
+    }
+  }, []);
+
+  useEffect(() => {
+    let {id} = route.params;
+
+    getInfoFromStorage(id);
+    // getNextSevenDays();
+    if (isFocused) {
+      getInfoFromStorage(id);
+    }
+    var startDate = new Date();
+    var aryDates = GetNextDates(startDate, 7);
+    // console.log(aryDates);
+    setDayNameYear(aryDates);
+  }, [isFocused]);
+
+  const [userId, setUserId] = useState('');
+
+  const [dayNameYear, setDayNameYear] = useState([]);
+  const [guestNum, setGuestNum] = useState([
+    {
+      id: 1,
+      selected: false,
+    },
+    {
+      selected: false,
+      id: 2,
+    },
+    {
+      id: 3,
+      selected: false,
+    },
+    {
+      selected: false,
+      id: 4,
+    },
+
+    {
+      selected: false,
+      id: 5,
+    },
+    {
+      selected: false,
+      id: 6,
+    },
+  ]);
+
+  useEffect(() => {
+    getInfoFromStorage();
+  }, []);
+
+  const [userDetails, setUserDetails] = useState(null);
+
+  const getUserdetailsPage = (value, _id) => {
+    setLoading(true);
+    // let body = {
+    //   user_id: _id,
+    // };
+    // console.log('daa -> ', JSON.stringify(body) + value);
+    ApiCall('post', null, API_END_POINTS.getUserInfo, {
+      Authorization: `Bearer ${value}`,
+    })
+      .then(response => {
+        // console.log('profile data -> ', JSON.stringify(response?.data));
+        if (response?.data?.status) {
+          setUserDetails(response?.data?.response);
+          setName(response?.data?.response?.name);
+        } else {
+          setUserDetails({});
+          setName('');
+        }
+      })
+      .catch(error => {
+        console.log('ERROR IN getCuisines API -> ', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  const selectGuestCount = index => {
+    let a = [...guestNum];
+
+    let b = a.map((item, idx) => {
+      let temp = Object.assign({}, item);
+
+      // if (index == 0) {
+      //   if (temp?.selected) {
+      //     temp.selected = false;
+      //     setSelectedGuestNumber(index + 1 + '');
+      //   } else {
+      //     temp.selected = true;
+      //     setSelectedGuestNumber('');
+      //   }
+      // } else
+      if (index >= idx) {
+        temp.selected = true;
+        if (temp?.selected) {
+          setSelectedGuestNumber(index + 1 + '');
+        } else {
+          setSelectedGuestNumber('');
+        }
+      } else {
+        temp.selected = false;
+      }
+      return temp;
+    });
+    setGuestNum(b);
+  };
+
+  const selectDayCount = index => {
+    let a = [...dayNameYear];
+
+    let b = a.map((item, idx) => {
+      let temp = Object.assign({}, item);
+      if (index == idx) {
+        temp.selected = !temp.selected;
+        if (temp?.selected) {
+          setSelectedDate(temp?.fDate + '');
+          setSelectedBookingDate(temp?.fDate + '');
+        } else {
+          setSelectedBookingDate('');
+        }
+      } else {
+        temp.selected = false;
+      }
+      return temp;
+    });
+    setDayNameYear(b);
+
+    // setFlatListTimeSlotArr(timeSlotArr[index].arr);
+  };
+
+  const selectTimeSlotCount = index => {
+    let a = [...flatListTimeSlotArr];
+
+    let b = a.map((item, idx) => {
+      let temp = Object.assign({}, item);
+      if (index == idx) {
+        temp.selected = !temp.selected;
+        if (temp?.selected) {
+          setSelectedTimeSlot(temp?.timeSlot);
+        } else {
+          setSelectedTimeSlot('');
+        }
+      } else {
+        temp.selected = false;
+      }
+      return temp;
+    });
+
+    setFlatListTimeSlotArr(b);
+  };
+  const [bookingDayArray, setBookingDay] = useState([]);
+
+  const [selectedDate, setSelectedDate] = useState();
+
+  const getNextSevenDays = () => {
+    let d = new Date();
+    var days = [
+      'Today',
+      'Tomorrow',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    var yearName = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'July',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    let arr = [];
+
+    for (let index = 0; index < 7; index++) {
+      let day = d.getDay() + index;
+
+      let dName = days[day];
+      let daysss = d.getDate() + index;
+
+      let year = d.getMonth() + 1;
+      let yName = yearName[year - 1];
+      let y = d.getFullYear();
+      let dateMonth = daysss + ' ' + yName;
+      // ShowConsole(daysss + '-' + year + '-' + y);
+
+      arr.push({
+        dayName: dName,
+        dateYear: dateMonth,
+        selected: false,
+        fullDate: daysss + '-' + year + '-' + y,
+        fDate: dateMonth + ' ' + y,
+      });
+    }
+    setDayNameYear(arr);
+    // ShowConsole(JSON.stringify(arr));
+  };
+
+  function GetNextDates(startingDate, daysToAddNext) {
+    var arrayDates = [];
+
+    for (var i = 0; i <= daysToAddNext; i++) {
+      var currentDate = new Date();
+      currentDate.setDate(startingDate.getDate() + i);
+
+      arrayDates.push({
+        dayName: DayAsString(currentDate.getDay()),
+        date:
+          currentDate.getDate() + ' ' + MonthAsString(currentDate.getMonth()),
+        selected: false,
+        fullDate:
+          currentDate.getDate() +
+          '-' +
+          currentDate.getMonth() +
+          1 +
+          '-' +
+          currentDate.getFullYear(),
+        fDate:
+          currentDate.getDate() + ' ' + MonthAsString(currentDate.getMonth()),
+      });
+    }
+
+    return arrayDates;
+  }
+
+  function MonthAsString(monthIndex) {
+    var d = new Date();
+    var month = new Array();
+    month[0] = 'Jan';
+    month[1] = 'Feb';
+    month[2] = 'Mar';
+    month[3] = 'Apr';
+    month[4] = 'May';
+    month[5] = 'Jun';
+    month[6] = 'Jul';
+    month[7] = 'Aug';
+    month[8] = 'Sep';
+    month[9] = 'Oct';
+    month[10] = 'Nov';
+    month[11] = 'Dec';
+
+    return month[monthIndex];
+  }
+
+  function DayAsString(dayIndex) {
+    var weekdays = new Array(7);
+    weekdays[0] = 'Sunday';
+    weekdays[1] = 'Monday';
+    weekdays[2] = 'Tuesday';
+    weekdays[3] = 'Wednesday';
+    weekdays[4] = 'Thursday';
+    weekdays[5] = 'Friday';
+    weekdays[6] = 'Saturday';
+
+    return weekdays[dayIndex];
+  }
+
+  const renderGuestNum = ({item, index}) => {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={{
+          backgroundColor: item?.selected ? COLORS.primary : '#f5e4e6',
+          paddingHorizontal: 25,
+          paddingVertical: 10,
+          marginStart: index == 0 ? SIZES.padding + 5 : 10,
+          marginEnd: index == guestNum?.length - 1 ? SIZES.padding + 5 : 10,
+          borderRadius: 5,
+          marginVertical: 5,
+        }}
+        onPress={() => {
+          selectGuestCount(index);
+        }}>
+        <Text
+          style={[
+            // styles.guestNum,
+            {
+              color: item?.selected ? COLORS.white : COLORS.black,
+              fontFamily: item?.selected ? 'Segoe UI Bold' : 'Segoe UI',
+
+              fontSize: 16,
+            },
+          ]}>
+          {item.id}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderDayNameNum = ({item, index}) => {
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={{
+          backgroundColor: item?.selected ? COLORS.primary : '#f5e4e6',
+          paddingHorizontal: 25,
+          paddingVertical: 5,
+          marginStart: index == 0 ? SIZES.padding + 5 : 10,
+          marginEnd: index == guestNum?.length - 1 ? SIZES.padding + 5 : 10,
+          borderRadius: 5,
+          marginVertical: 5,
+        }}
+        onPress={() => {
+          selectDayCount(index);
+        }}>
+        <Text
+          style={[
+            // styles.guestNum,
+            {
+              color: item?.selected ? COLORS.white : COLORS.grey,
+              fontFamily: item?.selected ? 'Segoe UI Bold' : 'Segoe UI',
+              textAlign: 'center',
+              alignSelf: 'center',
+              fontSize: 16,
+            },
+          ]}>
+          {item.dayName}
+        </Text>
+        <Text
+          style={[
+            {
+              color: item?.selected ? COLORS.white : COLORS.grey,
+              fontFamily: item?.selected ? 'Segoe UI Bold' : 'Segoe UI',
+              textAlign: 'center',
+              fontSize: 16,
+              alignSelf: 'center',
+            },
+          ]}>
+          {item.date}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderTimeNum = ({item, index}) => {
+    // console.log('item  renderTimeNum renderTimeNum  -> ', JSON.stringify(item));
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={{
+          backgroundColor: item?.selected ? COLORS.primary : '#f5e4e6',
+          paddingHorizontal: 15,
+          paddingVertical: 10,
+          marginStart: index == 0 ? SIZES.padding + 5 : 10,
+          marginEnd: index == guestNum?.length - 1 ? SIZES.padding + 5 : 10,
+          borderRadius: 5,
+          marginVertical: 5,
+        }}
+        onPress={() => {
+          selectTimeSlotCount(index);
+        }}>
+        <Text
+          style={[
+            // styles.guestNum,
+            {
+              color: item?.selected ? COLORS.white : COLORS.grey,
+              fontFamily: item?.selected ? 'Segoe UI Bold' : 'Segoe UI',
+
+              fontSize: 16,
+            },
+          ]}>
+          {item.time_from} - {item.time_to}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const [flatListTimeSlotArr, setFlatListTimeSlotArr] = useState([]);
+
+  const [timeSlotArr, setTimeSlotArr] = useState([
+    {
+      arr: [
+        {timeSlot: '10:00 - 11:00 Am'},
+        {timeSlot: '11:00 - 12:00 Pm'},
+        {timeSlot: '12:00 - 1:00 Pm'},
+        {timeSlot: '1:00 - 2:00 Pm'},
+        {timeSlot: '2:00 - 3:00 Pm'},
+        {timeSlot: '3:00 - 4:00 Pm'},
+        {timeSlot: '4:00 - 5:00 Pm'},
+        {timeSlot: '5:00 - 6:00 Pm'},
+        {timeSlot: '6:00 - 7:00 Pm'},
+      ],
+    },
+    {
+      arr: [
+        {timeSlot: '11:00 - 12:00 Pm'},
+        {timeSlot: '12:00 - 1:00 Pm'},
+        {timeSlot: '1:00 - 2:00 Pm'},
+        {timeSlot: '2:00 - 3:00 Pm'},
+        {timeSlot: '3:00 - 4:00 Pm'},
+        {timeSlot: '4:00 - 5:00 Pm'},
+        {timeSlot: '5:00 - 6:00 Pm'},
+        {timeSlot: '6:00 - 7:00 Pm'},
+      ],
+    },
+    {
+      arr: [
+        {timeSlot: '10:00 - 11:00 Am'},
+        {timeSlot: '11:00 - 12:00 Pm'},
+        {timeSlot: '12:00 - 1:00 Pm'},
+        {timeSlot: '1:00 - 2:00 Pm'},
+        {timeSlot: '2:00 - 3:00 Pm'},
+        {timeSlot: '3:00 - 4:00 Pm'},
+        {timeSlot: '4:00 - 5:00 Pm'},
+        {timeSlot: '5:00 - 6:00 Pm'},
+        {timeSlot: '6:00 - 7:00 Pm'},
+      ],
+    },
+    {
+      arr: [
+        {timeSlot: '11:00 - 12:00 Pm'},
+        {timeSlot: '12:00 - 1:00 Pm'},
+        {timeSlot: '1:00 - 2:00 Pm'},
+        {timeSlot: '2:00 - 3:00 Pm'},
+        {timeSlot: '3:00 - 4:00 Pm'},
+        {timeSlot: '4:00 - 5:00 Pm'},
+        {timeSlot: '5:00 - 6:00 Pm'},
+        {timeSlot: '6:00 - 7:00 Pm'},
+      ],
+    },
+    {
+      arr: [
+        {timeSlot: '10:00 - 11:00 Am'},
+        {timeSlot: '11:00 - 12:00 Pm'},
+        {timeSlot: '12:00 - 1:00 Pm'},
+        {timeSlot: '1:00 - 2:00 Pm'},
+        {timeSlot: '2:00 - 3:00 Pm'},
+        {timeSlot: '3:00 - 4:00 Pm'},
+        {timeSlot: '4:00 - 5:00 Pm'},
+        {timeSlot: '5:00 - 6:00 Pm'},
+        {timeSlot: '6:00 - 7:00 Pm'},
+      ],
+    },
+    {
+      arr: [
+        {timeSlot: '11:00 - 12:00 Pm'},
+        {timeSlot: '12:00 - 1:00 Pm'},
+        {timeSlot: '1:00 - 2:00 Pm'},
+        {timeSlot: '2:00 - 3:00 Pm'},
+        {timeSlot: '3:00 - 4:00 Pm'},
+        {timeSlot: '4:00 - 5:00 Pm'},
+        {timeSlot: '5:00 - 6:00 Pm'},
+        {timeSlot: '6:00 - 7:00 Pm'},
+      ],
+    },
+    {
+      arr: [
+        {timeSlot: '10:00 - 11:00 Am'},
+        {timeSlot: '11:00 - 12:00 Pm'},
+        {timeSlot: '12:00 - 1:00 Pm'},
+        {timeSlot: '1:00 - 2:00 Pm'},
+        {timeSlot: '2:00 - 3:00 Pm'},
+        {timeSlot: '3:00 - 4:00 Pm'},
+        {timeSlot: '4:00 - 5:00 Pm'},
+        {timeSlot: '5:00 - 6:00 Pm'},
+        {timeSlot: '6:00 - 7:00 Pm'},
+      ],
+    },
+  ]);
+
+  const updateFavUnFav = () => {
+    // if (item?.is_like) {
+    //   ApiCall('post', body, API_END_POINTS.restaurantRemoveFavorite, {});
+    // } else {
+    //   ApiCall('post', body, API_END_POINTS.restaurantAddFavorite, {});
+    // }
+
+    if (favorite) {
+      let body = {user_id: userId, vendor_id: receivedItem?.id + ''};
+      ApiCall('post', body, API_END_POINTS.restaurantRemoveFavorite, {
+        Authorization: `Bearer ${apiToken}`,
+      })
+        .then(response => {
+          if (response?.data?.status) {
+            ShowMessage(response?.data?.message);
+            setFavorite(false);
+          }
+        })
+        .catch(() => {
+          console.log('ERROR IN API => ');
+        });
+    } else {
+      let body = {user_id: userId, vendor_id: receivedItem?.id + ''};
+      // console.log(
+      //   'aaaaaaaaaaaaaaaaaaaaaaaa 111 -> ',
+      //   idx + ' ' + JSON.stringify(body),
+      // );
+
+      ApiCall('post', body, API_END_POINTS.restaurantAddFavorite, {
+        Authorization: `Bearer ${apiToken}`,
+      })
+        .then(response => {
+          if (response?.data?.status) {
+            setFavorite(true);
+
+            ShowMessage(response?.data?.message);
+            console.log('restaurantRemoveFavorite ->>. ', response?.data);
+          }
+        })
+        .catch(() => {
+          console.log('ERROR IN API => ');
+        });
+    }
+  };
+
+  const updateFavUnFavProduct = (_item, idx) => {
+    let a = detailsData.map((item, index) => {
+      let t = Object.assign({}, item);
+
+      let b = t?.products?.map((_i, _key) => {
+        let temp = Object.assign({}, _i);
+        if (temp?.product_id == _item?.product_id) {
+          console.log(
+            'aaaaaaaaaaaaaaaaaaaaaaaa 111 -> temp?.product_id == _item?.product_id',
+            temp?.product_id == _item?.product_id,
+          );
+          if (temp.is_like == 1) {
+            // console.log(
+            //   'aaaaaaaaaaaaaaaaaaaaaaaa 111 -> ',
+            //   idx + ' ' + JSON.stringify(temp),
+            // );
+            temp.is_like = 0;
+            let body = {user_id: userId, product_id: temp?.product_id + ''};
+            ApiCall('post', body, API_END_POINTS.productRemoveFavorite, {
+              Authorization: `Bearer ${apiToken}`,
+            })
+              .then(response => {
+                console.log(
+                  'restaurantRemoveFavorite ->>. ',
+                  JSON.stringify(response?.data),
+                );
+                if (response?.data?.status) {
+                  ShowMessage(response?.data?.message);
+                }
+              })
+              .catch(error => {
+                console.log('restaurantRemoveFavorite ->>. ', error);
+              });
+          } else {
+            let body = {user_id: userId, product_id: temp?.product_id + ''};
+
+            ApiCall('post', body, API_END_POINTS.productAddFavorite, {
+              Authorization: `Bearer ${apiToken}`,
+            })
+              .then(response => {
+                console.log(
+                  'restaurantRemoveFavorite ->>. ',
+                  JSON.stringify(response?.data),
+                );
+                if (response?.data?.status) {
+                  ShowMessage(response?.data?.message);
+                }
+              })
+              .catch(error => {
+                console.log('restaurantRemoveFavorite ->>. ', error);
+              });
+            temp.is_like = 1;
+          }
+        }
+        return temp;
+      });
+      return {
+        ...t,
+        products: b,
+      };
+    });
+
+    setDetailsData(a);
+  };
+
+  const [vendorId, setVendorId] = useState('');
+
+  useEffect(() => {
+    let {bookTable} = route.params;
+    let {item} = route.params;
+    let vId = item?.vendor_id;
+    dispatch(releaseVendorId(item?.id + '' || item?.vendor_id));
+    console.log('hello itemmmmmmmmmmmmmmmmmmmmmmmmm-> ', JSON.stringify(item));
+
+    setReceivedItem(item);
+    setFavorite(item?.is_like);
+
+    if (bookTable) {
+      setChangeOne(false);
+      setChangeTwo(true);
+    } else {
+      setChangeTwo(false);
+      setChangeOne(true);
+    }
+    // console.log('Book Table =-> ', JSON.stringify(item));
+    setVendorId(item?.id + '' || vId);
+    getInfoFromStorage(item?.id || vId);
+
+    if (isFocused) {
+      getInfoFromStorage(item?.id || vId);
+    }
+  }, []);
+
+  const [restSlotData, setRestSlotData] = useState([]);
+
+  // function formatAMPM(date) {
+  //   var hours = date.getHours();
+  //   var minutes = date.getMinutes();
+  //   var ampm = hours >= 12 ? 'pm' : 'am';
+  //   hours = hours % 12;
+  //   hours = hours ? hours : 12; // the hour '0' should be '12'
+  //   minutes = minutes < 10 ? '0' + minutes : minutes;
+  //   var strTime = hours + ':' + minutes + ' ' + ampm;
+  //   return strTime;
+  // }
+
+  const getDineOutRestSlot = (vId, token) => {
+    let a = new Date().getDate();
+    let b = new Date().getMonth() + 1;
+    let c = new Date().getFullYear();
+
+    // const d = moment('2022-10-28 12:09:00').format('hh:mm a');
+    // const d = new Date('2022-10-28 12:09:00');
+    // console.log(
+    //   'ddddddddddddddddddddddddddddddddddddddddd ->>>>>>>>>>>>>>>>>>>> ',
+    //   d,
+    // );
+    // console.log('abc -> ', a + '-' + b + '-' + c);
+
+    let body = {
+      // vendor_id: vId,
+      vendor_id: '1',
+      date: '28-10-2023',
+    };
+    //
+    // console.log('send data in api => ', JSON.stringify(body));
+
+    ApiCall('post', body, API_END_POINTS.getDineOutSlot, {
+      Authorization: `Bearer ${token}`,
+    })
+      .then(response => {
+        if (response?.data?.status) {
+          // console.log(
+          //   'ddddddddddddddddddddddddddddddddddddddddd ->>>>>>>>>>>>>>>>>>>> ',
+          //   JSON.stringify(response?.data),
+          // );
+          const newArray = Object.values(
+            response?.data?.response?.days?.booking_time,
+          );
+          const newArray1 = newArray.map((item, index) => {
+            return {
+              ...item,
+              selected: false,
+            };
+          });
+
+          let b = newArray.map((item, index) => {
+            // console.log("item?.time_from?.split(' ') ===v ?>", formatAMPM(d));
+            return {
+              time_from: moment(item?.time_from).format('hh:mm A'),
+              time_to: moment(item?.time_to).format('hh:mm A'),
+            };
+          });
+
+          setFlatListTimeSlotArr(b);
+
+          // console.log(
+          //   'bbbbbbbbbbbbbbbbbbbbb ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,-> ',
+          //   JSON.stringify(b),
+          // );
+
+          let a = newArray1[0]?.available_no_guest;
+
+          let g = [];
+          for (let i = 1; i <= a; i++) {
+            g.push({
+              id: i,
+              selected: false,
+            });
+          }
+          // console.log('ERROR IN getCuisines API -> ', a);
+
+          setGuestNum(g);
+        } else {
+          setRestSlotData([]);
+        }
+      })
+      .catch(error => {
+        console.log('ERROR IN getCuisines API latest error -> ', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  /** {"name":"Khanabadosh","image":"","vendor_ratings":0,"id":684, "lat":22.701593,"long":75.916315,
+   * "deal_categories":"94,98,102,125,128,133,134,141,144,157,164,118,193,121", "is_like":0,"distance":138.1,
+   * "categories":["Combo","Kebabs","Salads","Khichdi","Chicken","Noodles",
+   * "Sandwich","Main course","Starters","Fried rice","Soups","Meal","Curd & Raita","Paneer"]} */
+
+  const [totalMoney, setTotalMoney] = useState(0);
+  const [addItemIndex, setAddItemIndex] = useState('');
+
+  const addItem = (arr, id, mainData) => {
+    let t = 0;
+    let a = arr.map(item => {
+      var temp = Object.assign({}, item);
+      if (temp.variant_name === id) {
+        temp.selected = !temp.selected;
+        if (temp.selected) {
+          t = parseInt(totalMoney) + parseInt(temp.variant_price) + 0.0;
+        } else {
+          t = parseInt(totalMoney) - parseInt(temp.variant_price) + 0.0;
+        }
+      }
+      setTotalMoney(t);
+      return temp;
+    });
+    let r = {
+      options: a,
+      addons: optionAddonData?.addons || [],
+    };
+    console.log('temp --->>> ', JSON.stringify(r));
+
+    setOptionAddonData(r);
+  };
+  // const addItemAddon = (arr, id, mainData) => {
+  //   let t = 0;
+  //   let a = arr.map(item => {
+  //     var temp = Object.assign({}, item);
+  //     console.log('temp --->>> ', JSON.stringify(temp));
+  //     if (temp.addon === id) {
+  //       temp.selected = !temp.selected;
+
+  //       if (temp.selected) {
+  //         t = parseInt(totalMoney) + parseInt(temp.price) + 0.0;
+  //         setTotalAddon(t);
+  //       } else {
+  //         t = parseInt(totalMoney) - parseInt(temp.price) + 0.0;
+  //         setTotalAddon(t);
+  //       }
+  //     }
+  //     setTotalMoney(t);
+  //     return temp;
+  //   });
+  //   setItemClick({
+  //     ...itemClick,
+  //     addons: a,
+  //   });
+
+  // };
+  const [name, setName] = useState('');
+  const [mobile, setMobile] = useState('');
+
+  const [newName, setNewName] = useState('');
+  const [newMobile, setNewMobile] = useState('');
+
+  const [selectedGuestNumber, setSelectedGuestNumber] = useState('');
+  const [selectedBookingDate, setSelectedBookingDate] = useState('');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+
+  const getInfoFromStorage = async id => {
+    let t = '';
+    try {
+      await AsyncStorage.getItem('mobile', (err, value) => {
+        if (err) {
+          console.log('profile data -> ', JSON.stringify(err));
+        } else {
+          if (value !== '' && value !== null) {
+            setMobile(value);
+          } else {
+            setMobile('');
+          }
+        }
+      });
+
+      await AsyncStorage.getItem('name', (err, value) => {
+        if (err) {
+        } else {
+          if (value !== '' && value !== null) {
+            setName(value);
+          } else {
+            setName('');
+          }
+        }
+      });
+
+      await AsyncStorage.getItem('token', (err, value) => {
+        if (err) {
+        } else {
+          if (value !== '' && value !== null) {
+            setApiToken(value);
+            getDineOutRestSlot(id, value);
+            getRestDetailsPage(value, id);
+
+            // getVendorPromo(value, id);
+            getRestBrowseMenu(value, id);
+            t = value;
+          } else {
+            setApiToken('');
+          }
+        }
+      });
+      await AsyncStorage.getItem('userId', (err, value) => {
+        if (err) {
+        } else {
+          if (value !== '' && value !== null) {
+            setUserId(value);
+
+            // getUserdetailsPage(t, value);
+          } else {
+            setUserId('');
+          }
+        }
+      });
+    } catch (error) {}
+  };
+
+  const [itemClick, setItemClick] = useState(null);
+  const [cartItemIndex, setCartItemIndex] = useState(0);
+  const [optionListCount, setOptionListCount] = useState(1);
+
+  const onAddModalMinus = (action, index, arr) => {
+    let t = 0;
+    let a = arr?.map((item, i) => {
+      let temp = Object.assign({}, item);
+
+      if (index == temp.id + '') {
+        if (action == 'less') {
+          if (optionListCount == 1) {
+            t = totalMoney;
+            setTotalMoney(t);
+          } else if (optionListCount > 1) {
+            setOptionListCount(optionListCount - 1);
+            t = totalMoney - parseInt(temp?.variant_price);
+            setTotalMoney(t);
+          }
+        }
+      }
+
+      return temp;
+    });
+
+    setPData({
+      ...pData,
+      options: a,
+    });
+  };
+  const [receviedIndex, setReceivedIndex] = useState(0);
+  const [isAddonSelected, setIsAddonSelected] = useState(false);
+
+  const addItemAddon = (arr, id, mainData) => {
+    let t = 0;
+    let b = 0;
+    let a = arr.map(item => {
+      var temp = Object.assign({}, item);
+
+      if (temp.addon === id) {
+        temp.selected = !temp.selected;
+
+        if (temp.selected) {
+          t = parseInt(totalMoney) + parseInt(temp.price) + 0.0;
+          b = parseInt(temp.price) + parseInt(addonPrice);
+          setIsAddonSelected(true);
+        } else {
+          t = parseInt(totalMoney) - parseInt(temp.price) + 0.0;
+          b = parseInt(addonPrice) - parseInt(temp.price);
+          setIsAddonSelected(true);
+        }
+      }
+      setTotalMoney(t);
+
+      setAddonPrice(b);
+      return temp;
+    });
+
+    setPData({...pData, addons: a});
+  };
+
+  const onAddModalPlus = (action, index, arr, data, idx) => {
+    let t = 0;
+
+    let a = arr?.map((item, i) => {
+      let temp = Object.assign({}, item);
+      // let currentQty = temp.variant_qty;
+      if (index == temp.id) {
+        if (action == 'more') {
+          setOptionListCount(optionListCount + 1);
+
+          // addToCartRedux(pData);
+          // temp.variant_qty = currentQty + 1;
+          t = totalMoney + parseInt(temp?.variant_price);
+          // console.log('daa -> ', currentQty + ' ' + temp.variant_qty);
+        }
+      }
+      return temp;
+    });
+    // setTotalMoney(t + parseInt(addonPrice));
+    setTotalMoney(t);
+
+    setPData({
+      ...pData,
+      options: a,
+    });
+    setReceivedIndex(idx);
+    // ShowConsole(idx + ' ' + JSON.stringify(restHomePageDataFoody[idx]));
+
+    // restHomePageDataFoody[idx].qty = optionListCount;
+  };
+
+  const [layoutHeight, setLayoutHeight] = useState(0);
+  // useEffect(() => {
+  //   if (item.isExpanded) {
+  //     setLayoutHeight(null);
+  //   } else {
+  //     setLayoutHeight(0);
+  //   }
+  // }, [item.isExpanded]);
+
+  const renderExpandableItem = ({item, index}) => {
+    // console.log('ExpandableComponent -> ', JSON.stringify(item));
+    /*
+    {"menuName":"Burger","id":3,"products":[{"product_name":"Burger","product_price":"180.00",
+    "customizable":"true","image":"","type":"veg","product_id":8,"product_rating":"0",
+    "categoryName":"Burger","is_like":0,"qty":0}],"isExpanded":true} */
+    if (item.isExpanded) {
+      setLayoutHeight(null);
+    } else {
+      setLayoutHeight(0);
+    }
+    return item?.products?.length >= 1 ? (
+      <View>
+        {/*Header of the Expandable List Item*/}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => {
+            updateLayout(index);
+          }}
+          style={styles.header}>
+          <Text style={styles.headerText}>{item?.menuName}</Text>
+          <Image
+            source={icons.forward_arrow}
+            style={{
+              transform: [
+                {
+                  rotate: layoutHeight == 0 ? '90deg' : '-90deg',
+                },
+              ],
+              tintColor: COLORS.black,
+              width: 15,
+              height: 15,
+              resizeMode: 'center',
+              // paddingVertical: 10,
+            }}
+          />
+        </TouchableOpacity>
+        <View
+          style={{
+            height: layoutHeight,
+            overflow: 'hidden',
+          }}>
+          {/*Content under the header of the Expandable List Item*/}
+          {item?.products?.map((item, ins) => {
+            // console.log(
+            // 'item?.products? expandadble co => ',
+            //   JSON.stringify(item),
+            // );
+            return (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                key={ins}
+                style={[
+                  styles.content,
+                  {
+                    padding: 10,
+                  },
+                ]}
+                onPress={() => {
+                  // navigation.navigate('RestDishInformation', {
+                  //   item,
+                  //   cart: cartProduct,
+                  //   vendorId: vendorId,
+                  // });
+                }}>
+                <View>
+                  <Image
+                    source={{
+                      uri: item?.image,
+                    }}
+                    style={{
+                      height: 115,
+                      width: 115,
+                      // margin: 10,
+                      borderRadius: 10,
+                      // resizeMode: 'contain',
+                    }}
+                  />
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      updateFavUnFavProduct(item, index);
+                    }}
+                    style={styles.fav}>
+                    <Image
+                      source={
+                        item?.is_like == 0 ? icons.unfavorite : icons.favorite
+                      }
+                      style={{
+                        width: 25,
+                        height: 25,
+                        // tintColor: '#ff0000',
+                      }}
+                    />
+                  </TouchableOpacity>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'column',
+                    marginStart: 15,
+                    // alignItems: 'flex-start',
+                    flex: 1,
+                  }}>
+                  <Text
+                    style={{
+                      color: COLORS.black,
+                      fontSize: 16,
+                      fontFamily: 'Segoe UI Bold',
+                      marginStart: -2,
+                    }}>
+                    {item?.product_name}
+                  </Text>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => {}}
+                    style={styles.fav}>
+                    <Image
+                      source={icons.pure_veg}
+                      style={{
+                        width: 10,
+                        height: 10,
+                      }}
+                    />
+                  </TouchableOpacity>
+                  {/* <Text
+                    style={{
+                      color: COLORS.grey,
+                      marginTop: 5,
+                      fontFamily: 'Segoe UI',
+                      fontSize: 14,
+                    }}>
+                    Pizza
+                  </Text> */}
+                  <Text
+                    style={{
+                      color: COLORS.black,
+                      fontSize: 16,
+                      fontFamily: 'Segoe UI',
+                      marginTop: 5,
+                    }}>
+                    ₹ {item?.product_price}
+                  </Text>
+                  <View
+                    style={{
+                      // marginStart: 15,
+                      marginTop: 8,
+                      flexDirection: 'row',
+                      // justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
+                    {item?.product_rating == '0' ? null : (
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                        }}>
+                        <AntDesign name="staro" color={'gold'} />
+                        <AntDesign name="staro" color={'gold'} />
+                        <AntDesign name="staro" color={'gold'} />
+                        <AntDesign name="staro" color={'gold'} />
+                        <AntDesign name="staro" color={'gold'} />
+                        <Text style={[styles.distance]} numberOfLines={1}>
+                          0
+                        </Text>
+                      </View>
+                    )}
+                    <View
+                      style={{
+                        position: 'absolute',
+                        right: 5,
+                        top: -15,
+                        marginTop: item?.product_rating == '0' ? 30 : 15,
+                      }}>
+                      {item?.customizable == 'true' ? (
+                        <TouchableOpacity>
+                          <Text
+                            style={{
+                              fontFamily: 'Segoe UI',
+                              fontSize: 10,
+                              color: '#0638ff',
+                              alignSelf: 'center',
+                              marginVertical: 2,
+                            }}>
+                            Customizable
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
+                      {item?.qty >= 1 ? (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            marginStart: 10,
+                            borderRadius: 15,
+                            borderWidth: 1,
+                            borderColor: COLORS.primary,
+                            width: 85,
+                            alignItems: 'center',
+                          }}>
+                          <TouchableOpacity
+                            onPress={() => {
+                              onMinus('less', item?.product_id + '');
+                            }}>
+                            <View
+                              style={[
+                                {
+                                  paddingTop: 3,
+                                  paddingBottom: 3,
+                                  paddingEnd: 3,
+                                  borderRadius: 20,
+                                  borderWidth: 1,
+                                  borderColor: COLORS.primary,
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                  marginStart: -1,
+                                },
+                              ]}>
+                              <Image
+                                source={icons.minus}
+                                style={{
+                                  width: 20,
+                                  height: 20,
+                                  marginStart: 3,
+                                }}
+                              />
+                            </View>
+                          </TouchableOpacity>
+
+                          <Text
+                            style={{
+                              fontSize: 18,
+                              color: COLORS.black,
+                              paddingHorizontal: 5,
+                            }}>
+                            {item?.qty}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => {
+                              onPlus('more', item?.product_id + '');
+                            }}>
+                            <View
+                              style={[
+                                {
+                                  paddingTop: 3,
+                                  paddingBottom: 3,
+                                  paddingStart: 3,
+                                  borderRadius: 20,
+                                  borderWidth: 1,
+                                  borderColor: COLORS.primary,
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                  marginEnd: -1,
+                                },
+                              ]}>
+                              <Image
+                                source={icons.plus}
+                                style={{
+                                  width: 20,
+                                  height: 20,
+                                  marginEnd: 3,
+                                }}
+                              />
+                            </View>
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          style={{
+                            marginHorizontal: 10,
+                            paddingVertical: 5,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            borderColor: COLORS.primary,
+                            borderWidth: 1,
+                            borderRadius: 20,
+                            width: 85,
+                          }}
+                          onPress={() => {
+                            if (item?.customizable == 'true') {
+                              setShowAdd(true);
+                              let a = [];
+                              let b = [];
+                              if (item?.options) {
+                                a = item?.options?.map(item => {
+                                  return {
+                                    ...item,
+                                    variant_qty: 1,
+                                  };
+                                });
+                              }
+                              if (item?.addons) {
+                                b = item?.addons?.map((_item, _i) => {
+                                  return {
+                                    ..._item,
+                                    addon_qty: 1,
+                                  };
+                                });
+                              }
+                              setPData({...item, options: a, addons: b});
+                              optionsList = a;
+                              addonList = b;
+                              setCartItemIndex(index);
+
+                              setAddItemIndex(item?.product_id + '');
+                              if (item?.options && item?.options?.length >= 0) {
+                                onSelect(item?.options[0]);
+                              } else {
+                                setTotalMoney(item?.product_price);
+                              }
+                            } else {
+                              // addToCartNotCustomizable(item, item?.product_id + '');
+                              onPlus('more', item?.product_id);
+
+                              addToCartRedux(item);
+                            }
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: 'Segoe UI Bold',
+                              fontSize: 16,
+                              color: COLORS.primary,
+                              paddingHorizontal: 10,
+                            }}>
+                            Add
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    ) : null;
+  };
+
+  const renderExpandableItemTwo = ({item, index}) => {
+    // console.log('ExpandableComponent -> ', JSON.stringify(item?.chili_level));
+    /*
+    {"menuName":"Burger","id":3,"products":[{"product_name":"Burger","product_price":"180.00",
+    "customizable":"true","image":"","type":"veg","product_id":8,"product_rating":"0",
+    "categoryName":"Burger","is_like":0,"qty":0}],"isExpanded":true} */
+    if (index == 0) {
+      setShimmerLoading(false);
+    }
+
+    return item?.products?.length >= 1 ? (
+      <View>
+        {/*Header of the Expandable List Item*/}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => {
+            updateLayout(index);
+          }}
+          style={styles.header}>
+          <Text style={styles.headerText}>{item?.menuName}</Text>
+          <Image
+            source={icons.forward_arrow}
+            style={{
+              transform: [
+                {
+                  rotate: item?.isExpanded ? '-90deg' : '90deg',
+                },
+              ],
+              tintColor: COLORS.black,
+              width: 15,
+              height: 15,
+              resizeMode: 'center',
+              // paddingVertical: 10,
+            }}
+          />
+        </TouchableOpacity>
+
+        {/*Content under the header of the Expandable List Item*/}
+        {item.isExpanded &&
+          item?.products?.map((item, ins) => {
+            let chilli = [];
+
+            for (let i = 0; i < parseInt(item?.chili_level); i++) {
+              chilli.push(
+                <View key={i}>
+                  <Image
+                    source={icons.chilli_level}
+                    style={{
+                      width: 13,
+                      height: 13,
+                    }}
+                  />
+                </View>,
+              );
+            }
+
+            return (
+              <View>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  key={ins}
+                  style={[
+                    styles.content,
+                    {
+                      padding: 10,
+                      flexGrow: 1,
+                    },
+                  ]}
+                  onPress={() => {
+                    if (item?.customizable == 'true') {
+                      setShowAdd(true);
+
+                      setPData(item);
+                      console.log(
+                        'item customizable -> ',
+                        JSON.stringify(item),
+                      );
+
+                      setNewCartIndex(index);
+                      if (item?.options && item?.options?.length >= 0) {
+                        onSelect(item?.options[0]);
+                        // setTotalMoney(a[0]?.variant_price);
+                      }
+                    } else {
+                      setShowAdd(true);
+                      setPData(item);
+                      console.log(
+                        'item customizable -> ',
+                        JSON.stringify(item),
+                      );
+                      setNewCartIndex(index);
+                      if (item?.options && item?.options?.length >= 0) {
+                        onSelect(item?.options[0]);
+                        // setTotalMoney(a[0]?.variant_price);
+                      }
+                    }
+                  }}>
+                  <View>
+                    <Image
+                      source={{
+                        uri: item?.image,
+                      }}
+                      style={{
+                        height: 115,
+                        width: 115,
+                        // margin: 10,
+                        borderRadius: 10,
+                        // resizeMode: 'contain',
+                      }}
+                    />
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        updateFavUnFavProduct(item, index);
+                      }}
+                      style={styles.fav}>
+                      <Image
+                        source={
+                          item?.is_like == 0 ? icons.unfavorite : icons.favorite
+                        }
+                        style={{
+                          width: 25,
+                          height: 25,
+                          // tintColor: '#ff0000',
+                        }}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: 'column',
+                      marginStart: 15,
+                      // alignItems: 'flex-start',
+                      flex: 1,
+                    }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}>
+                      <Text
+                        style={{
+                          color: COLORS.black,
+                          fontSize: 16,
+                          fontFamily: 'Segoe UI Bold',
+                          marginEnd: 5,
+                          marginStart: -2,
+                        }}
+                        numberOfLines={2}
+                        ellipsizeMode="tail">
+                        {item?.product_name}
+                        {chilli}
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        color: COLORS.black,
+                        fontSize: 12,
+                        fontFamily: 'Segoe UI',
+                        marginVertical: 4,
+                        marginStart: -2,
+                      }}
+                      numberOfLines={2}
+                      ellipsizeMode="tail">
+                      {item?.dis}
+                    </Text>
+                    {item?.type == 'veg' ? (
+                      <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => {}}
+                        style={styles.fav}>
+                        <Image
+                          source={icons.pure_veg}
+                          style={{
+                            width: 10,
+                            height: 10,
+                          }}
+                        />
+                      </TouchableOpacity>
+                    ) : null}
+                    {/* <Text
+                    style={{
+                      color: COLORS.grey,
+                      marginTop: 5,
+                      fontFamily: 'Segoe UI',
+                      fontSize: 14,
+                    }}>
+                    Pizza
+                  </Text> */}
+                    <Text
+                      style={{
+                        color: COLORS.black,
+                        fontSize: 18,
+                        fontFamily: 'Segoe UI',
+                        marginTop: 5,
+                      }}>
+                      ₹ {item?.product_price}
+                    </Text>
+                    <View
+                      style={{
+                        // marginStart: 15,
+                        // marginTop: 8,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        // alignItems: 'center',
+                      }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                        }}>
+                        <AntDesign name="staro" color={'gold'} />
+                        <AntDesign name="staro" color={'gold'} />
+                        <AntDesign name="staro" color={'gold'} />
+                        <AntDesign name="staro" color={'gold'} />
+                        <AntDesign name="staro" color={'gold'} />
+                        {item?.product_rating == '0' ? null : (
+                          <Text style={[styles.distance]} numberOfLines={1}>
+                            {item?.product_rating}
+                          </Text>
+                        )}
+                      </View>
+                      <View>
+                        {item?.customizable == 'true' ? (
+                          <TouchableOpacity>
+                            <Text
+                              style={{
+                                fontFamily: 'Segoe UI',
+                                fontSize: 10,
+                                color: '#0638ff',
+                                alignSelf: 'center',
+                                marginVertical: 2,
+                              }}>
+                              Customizable
+                            </Text>
+                          </TouchableOpacity>
+                        ) : null}
+                        {item?.qty >= 1 ? (
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              marginStart: 10,
+                              borderRadius: 15,
+                              borderWidth: 1,
+                              borderColor: COLORS.primary,
+                              width: 85,
+                              alignItems: 'center',
+                            }}>
+                            <TouchableOpacity
+                              onPress={() => {
+                                onMinus('less', item?.product_id + '');
+                              }}>
+                              <View
+                                style={[
+                                  {
+                                    paddingTop: 3,
+                                    paddingBottom: 3,
+                                    paddingEnd: 3,
+                                    borderRadius: 20,
+                                    borderWidth: 1,
+                                    borderColor: COLORS.primary,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    marginStart: -1,
+                                  },
+                                ]}>
+                                <Image
+                                  source={icons.minus}
+                                  style={{
+                                    width: 20,
+                                    height: 20,
+                                    marginStart: 3,
+                                  }}
+                                />
+                              </View>
+                            </TouchableOpacity>
+
+                            <Text
+                              style={{
+                                fontSize: 18,
+                                color: COLORS.black,
+                                paddingHorizontal: 5,
+                              }}>
+                              {item?.qty}
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() => {
+                                onPlus('more', item?.product_id + '');
+                              }}>
+                              <View
+                                style={[
+                                  {
+                                    paddingTop: 3,
+                                    paddingBottom: 3,
+                                    paddingStart: 3,
+                                    borderRadius: 20,
+                                    borderWidth: 1,
+                                    borderColor: COLORS.primary,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    marginEnd: -1,
+                                  },
+                                ]}>
+                                <Image
+                                  source={icons.plus}
+                                  style={{
+                                    width: 20,
+                                    height: 20,
+                                    marginEnd: 3,
+                                  }}
+                                />
+                              </View>
+                            </TouchableOpacity>
+                          </View>
+                        ) : (
+                          <TouchableOpacity
+                            activeOpacity={0.8}
+                            style={{
+                              marginHorizontal: 10,
+                              paddingVertical: 5,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              borderColor: COLORS.primary,
+                              borderWidth: 1,
+                              borderRadius: 20,
+                              width: 85,
+                            }}
+                            onPress={() => {
+                              if (item?.customizable == 'true') {
+                                setShowAdd(true);
+                                let a = [];
+                                let b = [];
+                                if (item?.options) {
+                                  a = item?.options?.map(item => {
+                                    return {
+                                      ...item,
+                                      variant_qty: 1,
+                                    };
+                                  });
+                                }
+                                if (item?.addons) {
+                                  b = item?.addons?.map((_item, _i) => {
+                                    return {
+                                      ..._item,
+                                      addon_qty: 1,
+                                    };
+                                  });
+                                }
+                                setPData({...item, options: a, addons: b});
+                                optionsList = a;
+                                addonList = b;
+                                setCartItemIndex(index);
+
+                                setAddItemIndex(item?.product_id + '');
+                                if (
+                                  item?.options &&
+                                  item?.options?.length >= 0
+                                ) {
+                                  onSelect(item?.options[0]);
+                                } else {
+                                  setTotalMoney(item?.product_price);
+                                }
+                              } else {
+                                // addToCartNotCustomizable(item, item?.product_id + '');
+                                onPlus('more', item?.product_id);
+
+                                addToCartRedux(item);
+                              }
+                            }}>
+                            <Text
+                              style={{
+                                fontFamily: 'Segoe UI Bold',
+                                fontSize: 16,
+                                color: COLORS.primary,
+                                paddingHorizontal: 10,
+                              }}>
+                              Add
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+                <View
+                  style={{
+                    width: '100%',
+                    backgroundColor: COLORS.grey,
+                    height: 0.5,
+                  }}></View>
+              </View>
+            );
+          })}
+      </View>
+    ) : null;
+  };
+
+  const [selectedOption, setSelectedOption] = React.useState(null);
+  const [addonPrice, setAddonPrice] = useState(0);
+
+  const onSelect = item => {
+    let t = 0;
+    if (selectedOption && selectedOption.variant_name === item.variant_name) {
+      t = totalMoney;
+      setTotalMoney(t);
+    } else {
+      setSelectedOption(item);
+      t = parseInt(item?.variant_price) + 0.0;
+      setOptionListCount(1);
+      setTotalMoney(t + parseInt(addonPrice));
+    }
+  };
+  /** primary_variant_name : "Default" */
+  const getRestDetailsPage = (value, id) => {
+    setLoading(true);
+    setShimmerLoading(true);
+    let body = {
+      vendor_id: id + '',
+    };
+    ApiCall('post', body, API_END_POINTS.getRestaurantDetailPage, {
+      Authorization: `Bearer ${value}`,
+    })
+      .then(response => {
+        if (response?.data?.status) {
+          let a = [];
+
+          let t = response?.data?.response?.products?.map(item => {
+            // console.log(
+            //   'item featured dishes getRestaurantDetailPage -> ',
+            //   JSON.stringify(item?.products?.length),
+            // );
+            // if (item?.products?.length >= 1) {
+            a = item?.products?.map((_i, _in) => {
+              let tem = Object.assign({}, _i);
+              tem.qty = 0;
+              return tem;
+            });
+            // }
+            // console.log(
+            //   'item featured dishes getRestaurantDetailPage -> ',
+            //   JSON.stringify(item),
+            // );
+            return {
+              ...item,
+              products: a,
+              isExpanded: true,
+            };
+          });
+          // console.log(
+          //   'item featured dishes getRestaurantDetailPage -> ',
+          //   JSON.stringify(response?.data?.response),
+          // );
+          setDetailsData(t);
+        } else {
+          setDetailsData([]);
+        }
+      })
+      .catch(error => {
+        console.log('ERROR IN getCuisines API -> ', error);
+      })
+      .finally(() => {
+        setShimmerLoading(false);
+        setLoading(false);
+      });
+  };
+
+  const [totalAddon, setTotalAddon] = useState(0);
+
+  const getRestBrowseMenu = (value, id) => {
+    let body = {
+      vendor_id: id + '',
+    };
+    ApiCall('post', body, API_END_POINTS.restaurantBrowseMenu, {
+      Authorization: `Bearer ${value}`,
+    })
+      .then(response => {
+        if (response?.data?.status) {
+          setBrowseMenuData(response?.data?.response);
+        } else {
+          setBrowseMenuData([]);
+        }
+      })
+      .catch(error => {
+        console.log('ERROR IN getCuisines API -> ', error);
+      });
+  };
+
+  const [showRound, setShowRound] = useState(false);
+  const [vendorCouponData, setVendorCouponData] = useState([]);
+
+  const getVendorPromo = (value, id) => {
+    let body = {
+      // vendor_id: id + '',
+      vendor_id: '3',
+    };
+    ApiCall('post', body, API_END_POINTS.getVendorPromoCode, {
+      Authorization: `Bearer ${value}`,
+    })
+      .then(response => {
+        // console.log('removeItemFromCart =>? ', response?.data);
+
+        if (response?.data?.status) {
+          setVendorCouponData(response?.data?.response);
+        } else {
+          setVendorCouponData([]);
+        }
+      })
+      .catch(error => {
+        console.log('ERROR IN getCuisines API -> ', error);
+      });
+  };
+
+  const [pData, setPData] = useState({});
+  let addonList = [];
+  let optionsList = [];
+  const removeItemFromCart = async () => {
+    // setLoading(true);
+    let body = {
+      user_id: userId + '',
+    };
+    let a = await ApiCall('post', body, API_END_POINTS.removeEmptyCart, {
+      Authorization: `Bearer ${apiToken}`,
+    });
+    // console.log(
+    //   'removeItemFromCart  ssssssssssssssssssssssssssssssssssssss=>? ',
+    //   userId + ' ' + apiToken,
+    // );
+  };
+
+  const getRestProductOptionMenu = (item, _i) => {
+    // console.log('ERROR IN getCuisines API 1-> ', JSON.stringify(item));
+    setaddLoading(true);
+    let body = {
+      product_id: item?.product_id,
+    };
+    ApiCall('post', body, API_END_POINTS.restaurantProductCustomizableData, {
+      Authorization: `Bearer ${apiToken}`,
+    })
+      .then(response => {
+        // console.log(
+        //   'RESPONSE IN getCuisines API =>>>',
+        //   JSON.stringify(response?.data),
+        // );
+        if (response?.data?.status) {
+          // setOptionAddonData(response?.data?.response);
+          let o = [];
+          let a = [];
+          if (response?.data?.response?.options != null) {
+            o = response?.data?.response?.options?.map(item => {
+              return {
+                ...item,
+                selected: false,
+              };
+            });
+          }
+          if (response?.data?.response?.addons != null) {
+            a = response?.data?.response?.addons?.map(item => {
+              return {
+                ...item,
+                selected: false,
+                quantity: 1,
+              };
+            });
+          }
+
+          let r = {
+            options: o,
+            addons: a,
+          };
+
+          setOptionAddonData(r);
+          closeAddModal();
+        } else {
+          setOptionAddonData([]);
+          setShowCustomizeModal(false);
+          // addToCart(_i, addItemIndex);
+        }
+      })
+      .catch(error => {
+        console.log(
+          'ERROR IN getCuisines API getRestProductOptionMenu -> ',
+          error,
+        );
+      })
+      .finally(() => {
+        // setTimeout(() => {
+        setaddLoading(false);
+        // }, 1000);
+      });
+  };
+
+  const [showCustomizeModal, setShowCustomizeModal] = useState(true);
+  const [optionPrice, setOptionPrice] = useState(0);
+
+  const onPlus = (action, index) => {
+    let q1 = 0;
+    let q = 0;
+    let p = 0;
+    let b = [];
+    let a = detailsData?.map((item, i) => {
+      let t = Object.assign({}, item);
+      b = item?.products?.map((_item, _i) => {
+        let temp = Object.assign({}, _item);
+        let currentQty = temp.qty;
+        if (index == temp?.product_id + '') {
+          if (action == 'more') {
+            temp.qty = currentQty + 1;
+            p = parseInt(temp?.product_price); // parseInt(temp?.qty);
+            q1 = temp.qty;
+            if (parseInt(q1) > 1) {
+              onPlusUpdateCart(temp?.product_id, q1);
+            }
+          }
+        }
+        q = temp?.qty + q;
+        return temp;
+      });
+
+      return {
+        ...t,
+        products: b,
+      };
+    });
+
+    // console.log('item featured dishes on plus pppppppppppppppppppppp-> ', p);
+    setSumQuantity(parseInt(q));
+    if (optionPrice > 0) {
+      setSumTotal(parseInt(p) + parseInt(sumTotal) + parseInt(optionPrice));
+    } else {
+      setSumTotal(parseInt(p) + parseInt(sumTotal));
+    }
+    // setSumTotal(parseInt(p));
+    setDetailsData(a);
+  };
+
+  const onPlusUpdateCart = async (productId, qty) => {
+    let body = JSON.parse(JSON.stringify(cartProduct));
+
+    let b = body?.products?.map((_item, _i) => {
+      let temp = Object.assign({}, _item);
+      if (productId == temp?.product_id + '') {
+        temp.product_qty = qty + '';
+      }
+      return temp;
+    });
+
+    body = {
+      ...body,
+      products: b,
+    };
+
+    console.log(
+      'onPlusUpdateCart BODY IN LAST SCENE  before api hit  -> ',
+      JSON.stringify(body),
+    );
+
+    ApiCall('post', body, API_END_POINTS.updateProductCart, {
+      Authorization: `Bearer ${apiToken}`,
+    })
+      .then(response => {
+        console.log(
+          'RESPONSE IN ADD TO CART API =-> ',
+          JSON.stringify(response?.data),
+        );
+        if (response?.data?.status) {
+        } else {
+        }
+      })
+      .catch(error => {
+        console.log('ERROR IN ADD TO CART API =-> ', error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  const onMinusUpdateCart = async productId => {
+    // await removeItemFromCart();
+    let body = JSON.parse(JSON.stringify(cartProduct));
+    let idx = 0;
+    // console.log(
+    //   'item featured on PlusUpdateCart tem received -> ',
+    //   JSON.stringify(body),
+    // );
+
+    body?.products?.forEach((_item, _i) => {
+      let temp = Object.assign({}, _item);
+      if (productId == temp?.product_id + '') {
+        idx = _i;
+      }
+    });
+
+    body.products?.splice(idx, 1);
+    setCartProduct(body);
+    // console.log(
+    //   'onMinusUpdateCart BODY IN LAST SCENE -> ',
+    //   JSON.stringify(body),
+    // );
+    if (body.products?.length <= 0) {
+      await removeItemFromCart();
+    } else {
+      ApiCall('post', body, API_END_POINTS.updateProductCart, {
+        Authorization: `Bearer ${apiToken}`,
+      })
+        .then(response => {
+          console.log(
+            'RESPONSE IN ADD TO CART API =-> ',
+            JSON.stringify(response?.data),
+          );
+          if (response?.data?.status) {
+          } else {
+          }
+        })
+        .catch(error => {
+          console.log('ERROR IN ADD TO CART API =-> ', error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  };
+
+  const onMinus = (action, index) => {
+    let q = 0;
+    let p = 0;
+    let b = [];
+    let a = detailsData?.map((item, i) => {
+      let t = Object.assign({}, item);
+
+      b = item?.products?.map((_item, _i) => {
+        let temp = Object.assign({}, _item);
+        let currentQty = temp.qty;
+
+        if (index == temp?.product_id + '') {
+          if (action == 'less') {
+            temp.qty = currentQty - 1;
+            p = parseInt(sumTotal) - parseInt(temp?.product_price); // * parseInt(temp?.qty);
+            if (parseInt(temp?.qty) == 0) {
+              onMinusUpdateCart(temp?.product_id);
+            }
+          }
+        }
+        q = temp?.qty + q;
+
+        return temp;
+      });
+
+      return {
+        ...t,
+        products: b,
+      };
+    });
+    console.log('item featured dishes on plus -> ', JSON.stringify(q) + p);
+    setSumQuantity(parseInt(q));
+    if (q == 0) {
+      setSumTotal(0);
+      setOptionPrice(0);
+      setCartProduct(null);
+    } else {
+      // setSumTotal(parseInt(p) - parseInt(optionPrice));
+      setSumTotal(parseInt(p));
+    }
+    // setSumTotal(parseInt(p) - parseInt(sumTotal) - parseInt(optionPrice));
+    setDetailsData(a);
+  };
+
+  // useEffect(() => {
+  //   let q = 0;
+  //   let t = 0;
+  //   // let p = 0;
+  //   detailsData.forEach((item, index) => {
+  //     item?.products?.forEach(_item => {
+  //       if (_item.qty && _item.qty >= 1) {
+  //         t = parseInt(_item.qty) + t;
+  //         q = parseInt(_item?.product_price) * t;
+  //       }
+  //     });
+  //   });
+  //   setSumQuantity(t);
+  //   setSumTotal(q);
+  // }, [detailsData]);
+
+  const [sumTotal, setSumTotal] = useState(0);
+  const [sumQuantity, setSumQuantity] = useState(0);
+  // let cartItemCount = useSelector(state => state.state.cartArray);
+
+  let venId = useSelector(state => state.state?.vendor_id);
+
+  // console.log(
+  //   'add to cart rec item venIdvenIdvenIdvenIdvenIdvenIdvenIdvenId-> ',
+  //   JSON.stringify(venId),
+  // );
+  const addToCart = async (i, _ind) => {
+    await removeItemFromCart();
+    if (cartProduct != null) {
+      let body = JSON.parse(JSON.stringify(cartProduct));
+      body.products.push({
+        product_id: i.product_id + '',
+        product_qty: '1',
+      });
+      // console.log('add to cart rec item-> ', JSON.stringify(body));
+
+      if (selectedOption != null) {
+        let temp = Object.assign(
+          {},
+          body.products[cartProduct?.products?.length],
+        );
+        temp.variants = temp.variants || [];
+
+        temp.variants.push({
+          variant_id: selectedOption?.id + '',
+          variant_qty: '1',
+        });
+        // return {...item};
+
+        body.products[cartProduct?.products?.length] = temp;
+        // console.log(
+        //   'add to cart rece item temp options options --> ',
+        //   JSON.stringify(body.products),
+        // );
+      }
+      // else {
+      //   body = {
+      //     user_id: userId,
+      //     vendor_id: vendorId + '',
+      //     products: [
+      //       {
+      //         product_id: i.product_id + '',
+      //         product_qty: '1',
+      //         // addons: [],
+      //         // variants: [],
+      //       },
+      //     ],
+      //   };
+      // }
+
+      if (optionAddonData?.addons?.length >= 1) {
+        let temp = Object.assign(
+          {},
+          body.products[cartProduct?.products?.length],
+        );
+
+        optionAddonData?.addons?.map(item => {
+          if (item?.selected) {
+            let t = Object.assign({}, item);
+            temp.addons = temp.addons || [];
+
+            temp.addons.push({
+              addon_id: t?.id + '',
+              addon_qty: '1',
+            });
+          }
+        });
+        body.products[cartProduct?.products?.length] = temp;
+        // console.log(
+        //   'add to cart rece item temp addons addons addons addons --> ',
+        //   JSON.stringify(body.products),
+        // );
+      }
+      // else {
+      //   body = {
+      //     user_id: userId,
+      //     vendor_id: vendorId + '',
+      //     products: [
+      //       {
+      //         product_id: i.product_id + '',
+      //         product_qty: '1',
+      //       },
+      //     ],
+      //   };
+      // }
+      // console.log(
+      //   'RESPONSE IN ADD TO CART API IN LAST BODY ___=-> ',
+      //   JSON.stringify(body),
+      // );
+      console.log(
+        'add to cart rece item temp addons addons addons addons --> ',
+        JSON.stringify(body),
+      );
+      setCartProduct(body);
+      // dispatch(addItemToCart(body));
+      ApiCall('post', body, API_END_POINTS.productAddToCart, {
+        Authorization: `Bearer ${apiToken}`,
+      })
+        .then(response => {
+          if (response?.data?.status) {
+            ShowMessage(response?.data?.message);
+            if (showAdd) {
+              closeAddModal();
+            }
+            setPData({});
+            setTotalMoney(0);
+            setOptionAddonData([]);
+            onPlus('more', addItemIndex);
+            setShowRound(true);
+          } else {
+            ShowMessage(response?.data?.error + '');
+            setShowRound(true);
+            setShowAdd(false);
+            setPData({});
+            setTotalMoney(0);
+            setOptionAddonData([]);
+          }
+        })
+        .catch(error => {
+          console.log('ERROR IN ADD TO CART API =-> ', error);
+        });
+    } else {
+      await removeItemFromCart();
+
+      let body = {
+        user_id: userId,
+        vendor_id: vendorId + '',
+        products: [
+          {
+            product_id: i.product_id + '',
+            product_qty: '1',
+          },
+        ],
+      };
+
+      // if (optionAddonData?.options?.length >= 1) {
+      //   let temp = Object.assign({}, body.products[0]);
+
+      //   optionAddonData?.options?.map(item => {
+      //     temp.variants = temp.variants || [];
+      //     if (item?.selected) {
+      //       let t = Object.assign({}, item);
+      //       temp.variants.push({
+      //         variant_id: t?.id + '',
+      //         variant_qty: '1',
+      //       });
+      //       // return {...item};
+      //     }
+      //   });
+      //
+      //   body.products = [temp];
+      // }
+      if (selectedOption != null) {
+        let temp = Object.assign({}, body.products[0]);
+        temp.variants = temp.variants || [];
+
+        temp.variants.push({
+          variant_id: selectedOption?.id + '',
+          variant_qty: '1',
+        });
+
+        body.products = [temp];
+      }
+      // else {
+      //   body = {
+      //     user_id: userId,
+      //     vendor_id: vendorId + '',
+      //     products: [
+      //       {
+      //         product_id: i.product_id + '',
+      //         product_qty: '1',
+      //       },
+      //     ],
+      //   };
+      // }
+
+      if (optionAddonData?.addons?.length >= 1) {
+        let temp = Object.assign({}, body.products[0]);
+
+        optionAddonData?.addons?.map(item => {
+          if (item?.selected) {
+            let t = Object.assign({}, item);
+            temp.addons = temp.addons || [];
+
+            temp.addons.push({
+              addon_id: t?.id + '',
+              addon_qty: '1',
+            });
+          }
+        });
+        // console.log(
+        //   'add to cart rece item temp addons addons --> ',
+        //   JSON.stringify(temp),
+        // );
+        body.products = [temp];
+      }
+      // else {
+      //   body = {
+      //     user_id: userId,
+      //     vendor_id: vendorId + '',
+      //     products: [
+      //       {
+      //         product_id: i.product_id + '',
+      //         product_qty: '1',
+      //       },
+      //     ],
+      //   };
+      // }
+
+      console.log(
+        'add to cart rece item temp addons addons in last  before api hit--> ',
+        JSON.stringify(body),
+      );
+      // dispatch(addItemToCart(body));
+
+      setCartProduct(body);
+
+      ApiCall('post', body, API_END_POINTS.productAddToCart, {
+        Authorization: `Bearer ${apiToken}`,
+      })
+        .then(response => {
+          if (response?.data?.status) {
+            ShowMessage(response?.data?.message);
+            if (showAdd) {
+              closeAddModal();
+            }
+            setPData({});
+            setTotalMoney(0);
+            setOptionAddonData([]);
+            onPlus('more', addItemIndex);
+            setShowRound(true);
+          } else {
+            ShowMessage(response?.data?.error + '');
+            setShowRound(true);
+            setShowAdd(false);
+            setPData({});
+            setTotalMoney(0);
+            setOptionAddonData([]);
+          }
+        })
+        .catch(error => {
+          console.log('ERROR IN ADD TO CART API =-> ', error);
+        });
+    }
+  };
+
+  const addToCartNotCustomizable = async (i, itemId) => {
+    console.log('add to cart rec item-> ', JSON.stringify(i));
+    if (cartProduct != null) {
+      await removeItemFromCart();
+      let body = JSON.parse(JSON.stringify(cartProduct));
+
+      body?.products?.push({
+        product_id: i.product_id + '',
+        product_qty: i?.qty <= 0 ? 1 + '' : i?.qty + '',
+      });
+      setCartProduct(body);
+      // dispatch(addItemToCart(body));
+
+      console.log(
+        'cartProductcartProductcartProductcartProductcartProductcartProductcartProductcartProduct  -> ',
+        JSON.stringify(body),
+      );
+      ApiCall('post', body, API_END_POINTS.productAddToCart, {
+        Authorization: `Bearer ${apiToken}`,
+      })
+        .then(response => {
+          console.log(
+            'RESPONSE IN ADD TO CART API =-> ',
+            JSON.stringify(response?.data),
+          );
+          if (response?.data?.status) {
+            ShowMessage(response?.data?.message);
+            setTotalMoney(0);
+            onPlus('more', itemId);
+            setShowRound(true);
+          } else {
+            ShowMessage(response?.data?.error);
+          }
+        })
+        .catch(error => {
+          console.log('ERROR IN ADD TO CART API =-> ', error);
+        })
+        .finally(() => {
+          setaddLoading(false);
+        });
+    } else {
+      await removeItemFromCart();
+
+      let body = {
+        user_id: userId,
+        vendor_id: vendorId + '' || 4 + '',
+        products: [
+          {
+            product_id: i.product_id + '',
+            product_qty: i?.qty <= 0 ? 1 + '' : i?.qty + '',
+          },
+        ],
+      };
+      // dispatch(addItemToCart(body));
+
+      setCartProduct(body);
+      // console.log(
+      //   '111111111111111111111111111111cartProductcartProductcartProductcartProductcartProductcartProductcartProductcartProduct  -> ',
+      //   JSON.stringify(cartProduct),
+      // );
+
+      ApiCall('post', body, API_END_POINTS.productAddToCart, {
+        Authorization: `Bearer ${apiToken}`,
+      })
+        .then(response => {
+          console.log(
+            'RESPONSE IN ADD TO CART API =-> ',
+            JSON.stringify(response?.data),
+          );
+          if (response?.data?.status) {
+            ShowMessage(response?.data?.message);
+            setTotalMoney(0);
+            onPlus('more', itemId);
+            setShowRound(true);
+          } else {
+            ShowMessage(response?.data?.error);
+          }
+        })
+        .catch(error => {
+          console.log('ERROR IN ADD TO CART API =-> ', error);
+        })
+        .finally(() => {
+          setaddLoading(false);
+        });
+    }
+  };
+
+  /**add to cart end */
+
+  const [changeOne, setChangeOne] = useState(true);
+  const [changeTwo, setChangeTwo] = useState(false);
+  const [offerData, setOfferData] = useState([{}, {}, {}]);
+  const [switches, setSwitches] = useState(false);
+
+  const [data, setData] = useState([
+    {
+      isExpanded: true,
+      category_name: 'Pizza',
+      subcategory: [
+        {id: 1, val: 'Sub Cat 1'},
+        {id: 3, val: 'Sub Cat 3'},
+      ],
+    },
+    {
+      isExpanded: true,
+      category_name: 'Burger',
+      subcategory: [
+        {id: 4, val: 'Sub Cat 4'},
+        {id: 5, val: 'Sub Cat 5'},
+      ],
+    },
+    {
+      isExpanded: true,
+      category_name: 'Pasta',
+      subcategory: [
+        {id: 7, val: 'Sub Cat 7'},
+        {id: 9, val: 'Sub Cat 9'},
+      ],
+    },
+    {
+      isExpanded: true,
+      category_name: 'Beverages',
+      subcategory: [
+        {id: 10, val: 'Sub Cat 10'},
+        {id: 12, val: 'Sub Cat 2'},
+      ],
+    },
+    {
+      isExpanded: true,
+      category_name: 'Chinese',
+      subcategory: [
+        {id: 10, val: 'Sub Cat 10'},
+        {id: 12, val: 'Sub Cat 2'},
+      ],
+    },
+  ]);
+
+  const [multiSelect, setMultiSelect] = useState(false);
+
+  const updateLayout = index => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+    let array = JSON.parse(JSON.stringify(detailsData));
+    // let array = detailsData;
+
+    array[index]['isExpanded'] = !array[index]['isExpanded'];
+    ShowConsole(
+      'updateLayout index -> ' +
+        array[index]['isExpanded'] +
+        ' <<>> ' +
+        !array[index]['isExpanded'],
+    );
+
+    // if (multiSelect) {
+    // } else {
+    //   array.map((value, placeindex) => {
+    //     if (placeindex == index) {
+    //       console.log(
+    //         'place index -> ',
+    //         placeindex + ' ' + array[placeindex]['isExpanded'],
+    //       );
+    //       array[placeindex]['isExpanded'] = false;
+    //     } else {
+    //       // array[placeindex]['isExpanded'] = false;
+    //     }
+    //   });
+    // }
+
+    // console.log('Log array -> ', JSON.stringify(array));
+    setDetailsData(array);
+  };
+
+  const [cartProduct, setCartProduct] = useState(null);
+
+  const [showFilter, setShowFilter] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showChange, setShowChange] = useState(false);
+
+  const [selected, setSelected] = useState(false);
+
+  const [itemCount, setItemCount] = useState(0);
+
+  const closeFilterModal = () => {
+    setShowFilter(!showFilter);
+  };
+  const closeAddModal = () => {
+    setShowAdd(!showAdd);
+  };
+  const closeChangeModal = () => {
+    setShowChange(!showChange);
+  };
+
+  const renderFilterModal = () => {
+    return (
+      <Modal
+        visible={showFilter}
+        animationType="fade"
+        transparent={true}
+        statusBarTranslucent
+        onRequestClose={() => closeFilterModal()}
+        style={{flexGrow: 1}}>
+        <View
+          style={{
+            backgroundColor: '#00000090',
+            flexGrow: 1,
+            justifyContent: 'flex-end',
+          }}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => closeFilterModal()}
+            style={{flex: 1}}></TouchableOpacity>
+          <View style={style.additemView}>
+            <View
+              style={[
+                {
+                  elevation: 10,
+                  backgroundColor: COLORS.white,
+                  borderTopRightRadius: 15,
+                  borderTopLeftRadius: 15,
+                },
+                style.addItemHeader,
+              ]}>
+              <View
+                style={[
+                  style.rowView,
+                  {
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    borderTopRightRadius: 15,
+                    borderTopLeftRadius: 15,
+                  },
+                ]}>
+                <View style={{flex: 1}}>
+                  <Text style={style.addHeaderText}>Browse Menu</Text>
+                </View>
+                <TouchableOpacity onPress={() => closeFilterModal()}>
+                  <Image
+                    source={icons.cancel}
+                    style={{
+                      width: 20,
+                      height: 20,
+                      marginRight: 10,
+                    }}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View
+              style={[
+                style.middleView,
+                {borderTopRightRadius: 0, borderTopLeftRadius: 0},
+              ]}>
+              <View style={{overflow: 'hidden', paddingBottom: 10}}>
+                <View
+                  style={[
+                    {paddingLeft: 24, paddingRight: 7, paddingBottom: 10},
+                  ]}>
+                  <FlatList
+                    data={browseMenuData}
+                    renderItem={({item, index}) => {
+                      return (
+                        <TouchableOpacity
+                          onPress={() => {
+                            // flatListRef.current.scrollToIndex({
+                            //   index: index + 3,
+                            // });
+                            flatListRef.current.scrollToIndex({
+                              animated: true,
+                              index: index,
+                            });
+                            setMenuIndex(8);
+                            closeFilterModal();
+                          }}
+                          style={[
+                            style.rowView,
+                            {marginTop: 10, marginBottom: 10},
+                          ]}>
+                          <View style={{flex: 1, paddingRight: 10}}>
+                            <Text style={[style.sizeText]}>
+                              {item?.menuName}
+                            </Text>
+                          </View>
+                          <Text style={[style.sizeText, {marginEnd: 15}]}>
+                            {item?.count}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    }}
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const renderAddModal = () => {
+    return (
+      <Modal
+        visible={showAdd}
+        animationType="fade"
+        transparent={true}
+        statusBarTranslucent
+        onRequestClose={() => closeAddModal()}
+        style={{flexGrow: 1}}>
+        <View
+          style={{
+            backgroundColor: '#00000090',
+            flexGrow: 1,
+            justifyContent: 'flex-end',
+          }}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => closeAddModal()}
+            style={{
+              flex: 1,
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              // backgroundColor: COLORS.cartCountBgColor,
+            }}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => closeAddModal()}>
+              <Image
+                source={icons.cancel}
+                style={{
+                  width: 40,
+                  height: 40,
+                  margin: 10,
+                }}
+              />
+            </TouchableOpacity>
+          </TouchableOpacity>
+          <View style={style.additemView}>
+            <ScrollView
+              style={[
+                style.middleView,
+                {
+                  paddingTop: 10,
+                },
+              ]}>
+              <View
+                style={
+                  {
+                    // paddingBottom: 10,
+                  }
+                }></View>
+              <View
+                style={{
+                  elevation: 10,
+                  backgroundColor: COLORS.white,
+                  marginHorizontal: 10,
+                  borderRadius: 15,
+                  width: '95%',
+                  // height: 350,
+                }}>
+                <Image
+                  source={{
+                    uri: pData?.image,
+                  }}
+                  style={{
+                    width: '95%',
+                    height: 250,
+                    margin: 10,
+                    resizeMode: 'stretch',
+                    borderRadius: 5,
+                  }}
+                />
+                <TouchableOpacity
+                  onPress={() => {
+                    // updateFavUnFav(index);
+                  }}
+                  style={{
+                    borderRadius: 50,
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: 50,
+                    borderWidth: 1,
+                    right: 15,
+                    top: 15,
+                    position: 'absolute',
+                  }}>
+                  <Image
+                    source={pData?.is_like ? icons.favorite : icons.unfavorite}
+                    style={{
+                      width: 30,
+                      height: 30,
+                    }}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {}}
+                style={{
+                  // backgroundColor: '#e7e7e7',
+                  flexDirection: 'row',
+                  width: '100%',
+                  // borderTopRightRadius: 15,
+                  // borderTopLeftRadius: 15,
+                  justifyContent: 'space-between',
+                  paddingVertical: 5,
+                }}>
+                <View>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}>
+                    <Text
+                      style={{
+                        color: COLORS.black,
+                        fontSize: 18,
+                        fontFamily: 'Segoe UI Bold',
+                        // marginBottom: 5,
+                        marginTop: 5,
+                        marginEnd: 8,
+                        marginStart: 20,
+
+                        paddingBottom: pData?.product_rating == 0 ? 10 : 0,
+                      }}>
+                      {pData?.product_name}
+                    </Text>
+                  </View>
+
+                  <Text
+                    style={{
+                      color: COLORS.black,
+                      fontSize: 14,
+                      fontFamily: 'Segoe UI',
+                      marginEnd: 8,
+                      marginStart: 20,
+                      maxWidth: Dimensions.get('screen').width - 50,
+                    }}>
+                    {pData?.dis}
+                  </Text>
+
+                  <View
+                    style={{
+                      alignSelf: 'flex-start',
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      marginTop: 15,
+                      // marginBottom: 5,
+                      marginStart: 20,
+                      // backgroundColor: COLORS.primary,
+                    }}>
+                    <AntDesign name="staro" color={'gold'} />
+                    <AntDesign name="staro" color={'gold'} />
+                    <AntDesign name="staro" color={'gold'} />
+                    <AntDesign name="staro" color={'gold'} />
+                    <AntDesign name="staro" color={'gold'} />
+                    {pData?.product_rating != 0 ? (
+                      <>
+                        <Text
+                          style={{
+                            marginHorizontal: 3,
+                            fontFamily: 'Segoe UI Bold',
+                            fontSize: 12,
+                            color: COLORS.black,
+                            // marginTop: 0,
+                            alignSelf: 'center',
+                            marginVertical: 2,
+                          }}>
+                          {pData.product_rating}
+                        </Text>
+                        <Text
+                          style={{
+                            // marginHorizontal: 10,
+                            fontFamily: 'Segoe UI',
+                            fontSize: 10,
+                            color: '#0638ff',
+                            // marginTop: 0,
+                            alignSelf: 'center',
+                            marginVertical: 2,
+                          }}>
+                          {/* ({item?.reviewCount})12 Reviews */}(
+                          {pData.product_rating}) Reviews
+                        </Text>
+                      </>
+                    ) : null}
+                  </View>
+                  {/* <Text
+                    style={{
+                      color: COLORS.grey,
+                      fontSize: 1,
+                      fontFamily: 'Segoe UI',
+                      // marginTop: 5,
+                      marginStart: 20,
+                    }}>
+                   South Indian 
+                  </Text> */}
+                  {/* <Text
+                    style={{
+                      color: COLORS.darkGray,
+                      fontSize: 16,
+                      fontFamily: 'Segoe UI',
+                      marginTop: 5,
+                      marginStart: 20,
+                      paddingBottom: 10,
+                    }}>
+                    ₹ {pData?.product_price}
+                  </Text> */}
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    closeAddModal();
+                    setSelectedOption(null);
+                    // setTotalMoney(0)
+                  }}>
+                  {/* <Image
+                    source={icons.cancel}
+                    style={{
+                      width: 20,
+                      height: 20,
+                      marginTop: 10,
+                      marginRight: 10,
+                      // alignSelf: 'flex-end',
+                      // position: 'absolute',
+                      // right: 15,
+                    }}
+                  /> */}
+                  {pData?.type == 'veg' ? (
+                    <Image
+                      source={icons.pure_veg}
+                      style={{
+                        width: 8,
+                        height: 8,
+                        marginTop: 5,
+                        marginEnd: 15,
+                        // marginStart: 5,
+                      }}
+                    />
+                  ) : null}
+                </TouchableOpacity>
+              </TouchableOpacity>
+
+              {pData?.options?.length >= 1 ? (
+                <>
+                  <Text
+                    style={{
+                      color: COLORS.black,
+                      fontSize: 18,
+                      fontFamily: 'Segoe UI',
+                      marginTop: 15,
+                      marginStart: 20,
+                    }}>
+                    Options
+                  </Text>
+
+                  <RadioButtons
+                    selectedOption={selectedOption}
+                    onSelect={onSelect}
+                    options={pData?.options}
+                    var_count={optionListCount}
+                    onPlus={onAddModalPlus}
+                    onMinus={onAddModalMinus}
+                    mainData={pData}
+                    itemIndex={cartItemIndex}
+                  />
+                </>
+              ) : (
+                <View
+                  style={{
+                    marginTop: 15,
+                  }}>
+                  <ShimmerPlaceHolder
+                    LinearGradient={LinearGradient}
+                    height={15}
+                    width={Dimensions.get('window').width * 0.5}
+                    style={{
+                      borderRadius: 5,
+                      marginStart: 15,
+                    }}
+                  />
+                  <ShimmerPlaceHolder
+                    LinearGradient={LinearGradient}
+                    height={15}
+                    width={Dimensions.get('window').width * 0.93}
+                    style={{
+                      borderRadius: 5,
+                      marginStart: 15,
+                      marginTop: 5,
+                    }}
+                  />
+                  <ShimmerPlaceHolder
+                    LinearGradient={LinearGradient}
+                    height={15}
+                    width={Dimensions.get('window').width * 0.93}
+                    style={{
+                      marginTop: 5,
+                      borderRadius: 5,
+                      marginStart: 15,
+                    }}
+                  />
+
+                  <ShimmerPlaceHolder
+                    LinearGradient={LinearGradient}
+                    height={15}
+                    width={Dimensions.get('window').width * 0.5}
+                    style={{
+                      marginTop: 10,
+                      borderRadius: 5,
+                      marginStart: 15,
+                    }}
+                  />
+                  <ShimmerPlaceHolder
+                    LinearGradient={LinearGradient}
+                    height={15}
+                    width={Dimensions.get('window').width * 0.93}
+                    style={{
+                      borderRadius: 5,
+                      marginStart: 15,
+                      marginTop: 5,
+                    }}
+                  />
+                  <ShimmerPlaceHolder
+                    LinearGradient={LinearGradient}
+                    height={15}
+                    width={Dimensions.get('window').width * 0.93}
+                    style={{
+                      marginTop: 5,
+                      borderRadius: 5,
+                      marginStart: 15,
+                    }}
+                  />
+                </View>
+              )}
+              {pData?.addons?.length >= 1 ? (
+                <>
+                  <Text
+                    style={{
+                      color: COLORS.black,
+                      fontSize: 18,
+                      fontFamily: 'Segoe UI',
+                      marginTop: 15,
+                      marginStart: 20,
+                    }}>
+                    Addons
+                  </Text>
+                  <FlatList
+                    data={pData?.addons}
+                    renderItem={({item, index}) => {
+                      return (
+                        <View style={[{paddingLeft: 24, paddingRight: 6}]}>
+                          <View style={[style.rowView, {marginTop: 15}]}>
+                            <View style={{flex: 1, paddingRight: 10}}>
+                              <Text style={[style.sizeText]}>
+                                {item?.addon}
+                              </Text>
+                            </View>
+
+                            <TouchableOpacity
+                              onPress={() => {
+                                addItemAddon(pData?.addons, item?.addon, pData);
+                              }}
+                              style={{
+                                flexDirection: 'row',
+                              }}>
+                              <Text style={[style.sizeText, {marginEnd: 10}]}>
+                                ₹ {item?.price}
+                              </Text>
+
+                              <Image
+                                source={
+                                  item?.selected
+                                    ? icons.checked
+                                    : icons.unchecked
+                                }
+                                style={style.checkbox}
+                              />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      );
+                    }}
+                  />
+
+                  <View
+                    style={{
+                      padding: 10,
+                    }}></View>
+                </>
+              ) : null}
+            </ScrollView>
+            <View
+              style={{
+                // flex: 1,
+                backgroundColor: COLORS.lightGray,
+                paddingTop: 10,
+                borderTopColor: COLORS.grey,
+                // borderWidth: 0.5,
+                borderTopWidth: 0.5,
+              }}>
+              <TouchableOpacity
+                onPress={() => {
+                  // addToCartRedux(pData, optionListCount);
+                  // console.log('item - : ', JSON.stringify(pData));
+                  newPlus(pData?.product_id + '');
+                  setPData({});
+                  // setTotalMoney(0);
+                  setShowAdd(false);
+                }}
+                activeOpacity={0.8}
+                style={{
+                  height: 50,
+                  paddingHorizontal: 25,
+                  backgroundColor: COLORS.primary,
+                  marginTop: 1,
+                  marginBottom: 10,
+                  alignSelf: 'center',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: 10,
+                }}>
+                <Text
+                  style={{
+                    color: COLORS.white,
+                    fontSize: 18,
+                    fontFamily: 'Segoe UI Bold',
+                  }}>
+                  Add Item ₹ {totalMoney}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const renderChangeModal = () => {
+    return (
+      <Modal
+        transparent={true}
+        animationType={'none'}
+        visible={showChange}
+        onRequestClose={() => {
+          closeChangeModal();
+        }}>
+        <View style={style.modalBackground}>
+          <View style={style.activityIndicatorWrapper}>
+            <Text
+              style={{
+                color: COLORS.grey,
+                alignSelf: 'center',
+                fontSize: 18,
+                textAlign: 'center',
+                fontFamily: 'Segoe UI Bold',
+              }}
+              onPress={() => {
+                closeChangeModal();
+              }}>
+              Change Dine Out User Details
+            </Text>
+            <TouchableOpacity
+              onPress={() => closeChangeModal()}
+              style={{
+                position: 'absolute',
+                top: 5,
+                right: 0,
+              }}>
+              <Image
+                source={icons.cancel}
+                style={{
+                  width: 20,
+                  height: 20,
+                  marginRight: 10,
+                }}
+              />
+            </TouchableOpacity>
+            <View
+              style={{
+                width: '100%',
+                marginTop: 10,
+              }}>
+              <Text
+                style={{
+                  color: COLORS.grey,
+                  alignSelf: 'flex-start',
+                  fontSize: 16,
+                  fontFamily: 'Segoe UI Bold',
+                }}>
+                Name
+              </Text>
+
+              <TextInput
+                style={{
+                  color: COLORS.black,
+                  fontSize: 16,
+                  fontFamily: 'Segoe UI',
+                  // flex: 1,
+                  width: '95%',
+                  height: 45,
+                  marginHorizontal: 5,
+                }}
+                value={newName}
+                onChangeText={v => {
+                  setNewName(v);
+                }}
+                placeholder="Name"
+              />
+              <View
+                style={{
+                  backgroundColor: COLORS.grey,
+                  width: '100%',
+                  height: 1,
+                }}
+              />
+
+              <Text
+                style={{
+                  color: COLORS.grey,
+                  alignSelf: 'flex-start',
+                  fontSize: 16,
+                  fontFamily: 'Segoe UI Bold',
+                  marginTop: 15,
+                }}>
+                Mobile No.
+              </Text>
+
+              <TextInput
+                style={{
+                  color: COLORS.black,
+                  fontSize: 16,
+                  fontFamily: 'Segoe UI',
+
+                  width: '95%',
+                  height: 45,
+                  marginHorizontal: 5,
+                }}
+                maxLength={10}
+                keyboardType="number-pad"
+                value={newMobile}
+                onChangeText={v => {
+                  setNewMobile(v);
+                }}
+                placeholder="Mobile Number"
+              />
+              <View
+                style={{
+                  backgroundColor: COLORS.grey,
+                  width: '100%',
+                  height: 1,
+                }}
+              />
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (newName == '') {
+                    ShowMessage('Please enter name');
+                  } else if (newMobile == '') {
+                    ShowMessage('Please enter mobile number');
+                  } else if (!validateMobileNumber(newMobile)) {
+                    ShowMessage('Please enter correct mobile number');
+                  } else {
+                    setName(newName);
+                    setMobile(newMobile);
+                    setShowChange(false);
+                  }
+                }}
+                style={{
+                  paddingHorizontal: 20,
+                  backgroundColor: COLORS.primary,
+                  alignItems: 'center',
+                  alignSelf: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 10,
+                  borderRadius: 10,
+                  marginTop: 10,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: 'Segoe UI Bold',
+                    fontSize: 22,
+                    color: COLORS.white,
+                  }}>
+                  Save
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const addToCartRedux = (cartItem, cnt) => {
+    // ShowConsole(JSON.stringify({...cartItem, qty: cnt}));
+    dispatch(addItemToCart({...cartItem, qty: cnt}));
+    updateAsyncStorage();
+  };
+
+  const removeFromCartRedux = cartItem => {
+    dispatch(removeItemCart(cartItem));
+    updateAsyncStorage();
+  };
+
+  const updateAsyncStorage = () => {
+    // AsyncStorage.setItem('cartArray', JSON.stringify(cartItemArr));
+  };
+
+  let cartItemCount = useSelector(state => state.state.cartArray);
+
+  return (
+    <SafeAreaView style={style.mainContainer}>
+      <Loader loading={bookNowLoading} />
+      <ScrollView
+        style={style.mainContainer}
+        showsVerticalScrollIndicator={false}>
+        <View style={style.sliderMainContainer}>
+          {/* <Loader loading={addloading} /> */}
+          <SwiperFlatList
+            autoplay
+            autoplayDelay={3}
+            autoplayLoop
+            // showPagination
+            // data={[
+            //   'https://images.unsplash.com/photo-1584055482118-3f355578daef?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8Zm9vZCUyMGZvciUyMHBob25lfGVufDB8fDB8fA%3D%3D',
+            //   'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8Zm9vZHxlbnwwfHwwfHw%3D',
+            //   'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8Zm9vZHxlbnwwfHwwfHw%3D',
+            //   'https://images.unsplash.com/photo-1630659996121-34204da4ce5f?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8Zm9vZCUyMGZvciUyMHBob25lfGVufDB8fDB8fA%3D%3D',
+            // ]}
+            data={receivedItem?.banner_image || [receivedItem?.image]}
+            paginationStyleItem={style.paginationStyleItem}
+            paginationDefaultColor={'#e4e4e4'}
+            paginationActiveColor={'#707070'}
+            renderItem={({item, index}) => (
+              <View
+                style={{
+                  width: SIZES.width,
+                  justifyContent: 'center',
+                }}>
+                <ImageBackground
+                  source={{
+                    uri: item,
+                  }}
+                  style={{
+                    height: 250,
+                    width: '100%',
+                  }}></ImageBackground>
+              </View>
+            )}
+          />
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              position: 'absolute',
+              top: 0,
+              backgroundColor: '#fdf',
+              // height: 58,
+            }}>
+            <TouchableOpacity
+              style={style.backBG}
+              onPress={() => navigation.goBack()}>
+              <Image source={icons.back} style={style.bkBtn} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                updateFavUnFav();
+              }}
+              style={style.fav}>
+              <Image
+                source={favorite ? icons.favorite : icons.unfavorite}
+                style={{
+                  width: 30,
+                  height: 30,
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+        {/* <ImageBackground
+          source={{
+            uri: 'https://web10technologies.com/Chelab_full_project/public/vendor-banner/banner-evUE0KEcJm63241c670539a.jpeg',
+          }}
+          style={{
+            height: 250,
+            width: '100%',
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+            }}>
+            <TouchableOpacity
+              style={style.backBG}
+              onPress={() => navigation.goBack()}>
+              <Image source={icons.back} style={style.bkBtn} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                // setFavorite(!favorite);
+              }}
+              style={style.fav}>
+              <Image
+                source={
+                  receivedItem?.is_like ? icons.favorite : icons.unfavorite
+                }
+                style={{
+                  width: 30,
+                  height: 30,
+                  // tintColor: receivedItem?.is_like ? '#ff0000' : '#f2f2f2',
+                }}
+              />
+            </TouchableOpacity>
+          </View>
+        </ImageBackground> */}
+        {/* {changeOne ? ( */}
+        <View
+          activeOpacity={0.9}
+          style={[
+            // style.resCard,
+            {
+              // padding: 10,
+              flexDirection: 'row',
+              backgroundColor: COLORS.white,
+              // marginEnd: 10,
+              // marginStart: 15,
+              width: '95%',
+              alignSelf: 'center',
+              elevation: 10,
+              borderRadius: 10,
+              marginTop: 5,
+              marginBottom: 10,
+              position: 'relative',
+              alignItems: 'center',
+              bottom: 20,
+            },
+          ]}>
+          <View
+            style={[
+              style.resImageBg,
+              {
+                margin: 10,
+                backgroundColor: COLORS.restCardColor,
+              },
+            ]}>
+            <Image
+              source={{
+                uri: receivedItem?.image,
+              }}
+              style={style.resImage}
+            />
+          </View>
+          <View
+            style={{
+              flexGrow: 1,
+              // backgroundColor: COLORS.restCardColor,
+              alignItems: 'flex-start',
+              marginEnd: 5,
+            }}>
+            <Text
+              style={[
+                style.text,
+                {
+                  marginStart: 0,
+                },
+              ]}
+              numberOfLines={1}>
+              {receivedItem?.name || receivedItem?.restaurantName}
+            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+              }}>
+              <Text
+                style={[
+                  style.tagline,
+                  {
+                    marginStart: 0,
+                    alignSelf: 'flex-start',
+                    color: COLORS.grey,
+                    marginTop: 5,
+                    fontFamily: 'Segoe UI',
+                    fontSize: horizScale(13),
+                    flex: 1,
+                    flexWrap: 'wrap',
+                  },
+                ]}
+                numberOfLines={1}>
+                {/* {receivedItem?.categories?.toString()} */}
+                {receivedItem?.cuisines?.toString()}
+              </Text>
+            </View>
+            <View
+              style={[
+                style.resStarView,
+                {
+                  // flex: 1,
+                  marginStart: 0,
+                },
+              ]}>
+              <AntDesign name="staro" color={'gold'} />
+              <AntDesign name="staro" color={'gold'} />
+              <AntDesign name="staro" color={'gold'} />
+              <AntDesign name="staro" color={'gold'} />
+              <AntDesign name="staro" color={'gold'} />
+              {receivedItem?.vendor_ratings == '0' ? null : (
+                <Text style={[style.distance]} numberOfLines={1}>
+                  {receivedItem?.vendor_ratings}
+                </Text>
+              )}
+              {/* <Text style={style.blue_text}>
+                  ({receivedItem?.vendor_ratings} reviews)
+                </Text> */}
+            </View>
+
+            <View
+              style={[
+                style.resStarView,
+                {
+                  marginStart: 0,
+                },
+              ]}>
+              <Text
+                style={[
+                  style.open_close_status,
+                  {
+                    color: receivedItem?.isClosed == 1 ? '#ff4000' : '#0638ff',
+                    // fontSize: 14,
+                  },
+                ]}>
+                {receivedItem?.isClosed == 1 ? 'Closed' : 'Opened'}
+              </Text>
+              {receivedItem?.isClosed == 1 ? null : (
+                <View style={style.round_circle} />
+              )}
+              {/* {receivedItem?.isClosed == 0 ? null : (
+                <Text style={style.close_time}>Closes at 10 PM</Text>
+              )} */}
+              {receivedItem?.isClosed == 1 ? (
+                <Text
+                  style={[
+                    style.close_time,
+                    {
+                      marginStart: 15,
+                    },
+                  ]}>
+                  Opens at {receivedItem?.next_available}
+                  {/* Closes at{' '}
+                  {moment('2022-10-28' + ' ' + receivedItem?.end_time).format(
+                    'hh A',
+                  )} */}
+                </Text>
+              ) : (
+                <Text
+                  style={[
+                    style.close_time,
+                    {
+                      // marginStart: 15,
+                    },
+                  ]}>
+                  {/* Opens at {receivedItem?.next_available} */}
+                  Close at{' '}
+                  {moment('2022-10-28' + ' ' + receivedItem?.end_time).format(
+                    'hh A',
+                  )}
+                </Text>
+              )}
+            </View>
+          </View>
+        </View>
+        {/* ) :  
+         changeTwo ? (
+          <View activeOpacity={0.9} style={style.resCard}>
+            <View
+              style={{
+                alignItems: 'flex-start',
+              }}>
+              <Text
+                style={[
+                  style.text,
+                  {
+                    marginStart: 5,
+                  },
+                ]}
+                numberOfLines={1}>
+                Domino's Pizza
+              </Text>
+              <Text
+                style={[
+                  style.tagline,
+                  {
+                    marginStart: 5,
+                  },
+                ]}
+                numberOfLines={1}>
+                Pizza, fast food
+              </Text>
+              <View
+                style={[
+                  style.resStarView,
+                  {
+                    marginStart: 5,
+                  },
+                ]}>
+                <Image source={icons.star} style={style.distance_logo} />
+                <Text style={[style.distance]} numberOfLines={1}>
+                  4.5
+                </Text>
+                <Text
+                  style={{
+                    marginHorizontal: 5,
+                    fontFamily: 'Segoe UI',
+                    fontSize: 12,
+                    color: '#0638ff',
+                    alignSelf: 'center',
+                    marginVertical: 2,
+                  }}>
+                  (14 reviews)
+                </Text>
+              </View>
+              <View
+                style={[
+                  {
+                    marginStart: 5,
+                    marginTop: 8,
+                    flexDirection: 'row',
+                    width: '100%',
+                    // justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                ]}>
+                <Text
+                  style={{
+                    fontFamily: 'Segoe UI',
+                    fontSize: 15,
+                    color: '#0638ff',
+                  }}>
+                  Now Open
+                </Text>
+                <View
+                  style={{
+                    width: 3,
+                    height: 3,
+                    backgroundColor: COLORS.grey,
+                    borderRadius: 10,
+                    marginHorizontal: 5,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontFamily: 'Segoe UI',
+                    fontSize: 15,
+                    color: COLORS.grey,
+                  }}>
+                  Closes at 9 PM
+                </Text>
+
+                <Text
+                  style={{
+                    marginStart: 10,
+                    fontFamily: 'Segoe UI',
+                    fontSize: 10,
+                    color: COLORS.greenButtonBgColor,
+                    // marginTop: 0,
+                    // position: 'relative',
+                    // right: 10,
+                    // marginVertical: 2,
+                    // paddingVertical: 2,
+                    // marginBottom: 5,
+                    marginBottom: 5,
+                  }}>
+                  <Image
+                    source={icons.flat_offer}
+                    style={[
+                      styles.star_logo,
+                      {
+                        // marginEnd: 5,
+                        width: 15,
+                        height: 15,
+                      },
+                    ]}
+                  />{' '}
+                  Flat 10% OFF on Total bill
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : null} */}
+        <View
+          style={[
+            style.resStarView,
+            {
+              marginTop: 5,
+              marginStart: 0,
+            },
+          ]}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => {
+              setChangeOne(true);
+              setChangeTwo(false);
+            }}
+            style={{
+              width: '43%',
+              height: 35,
+              backgroundColor: changeOne ? COLORS.primary : '#e7e7e7',
+              borderRadius: 10,
+              marginHorizontal: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <Text
+              style={{
+                color: changeOne ? COLORS.white : COLORS.darkGray,
+
+                fontSize: horizScale(18),
+                fontFamily: 'Segoe UI Bold',
+              }}>
+              Order Food
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => {
+              setChangeOne(false);
+              setChangeTwo(true);
+            }}
+            style={{
+              width: '43%',
+              height: 35,
+              backgroundColor: changeTwo ? COLORS.primary : '#e7e7e7',
+
+              borderRadius: 10,
+              marginHorizontal: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <Text
+              style={{
+                color: changeTwo ? COLORS.white : COLORS.darkGray,
+                fontSize: horizScale(18),
+
+                fontFamily: 'Segoe UI Bold',
+              }}>
+              Book a table
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {changeOne ? (
+          <>
+            {vendorCouponData.length >= 1 ? (
+              <View>
+                <View>
+                  <Text style={[style.moodText]}>Offers</Text>
+                </View>
+                <FlatList
+                  data={[1, 2, 3]}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  renderItem={({item, index}) => {
+                    return (
+                      <View
+                        style={{
+                          backgroundColor: '#e5edff',
+                          marginStart: index == 0 ? SIZES.padding + 5 : 10,
+                          marginEnd:
+                            index == offerData.length - 1
+                              ? SIZES.padding + 2
+                              : 0,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          flexDirection: 'row',
+                          borderRadius: 10,
+                          paddingHorizontal: 5,
+                          marginTop: 10,
+                          paddingVertical: 5,
+                        }}>
+                        <Image
+                          source={icons.blue_offer}
+                          style={{
+                            width: 30,
+                            height: 30,
+                            margin: 5,
+                          }}
+                        />
+                        <View>
+                          <Text
+                            style={{
+                              color: changeTwo ? COLORS.white : COLORS.darkGray,
+                              fontSize: horizScale(15),
+                              fontFamily: 'Segoe UI',
+                              paddingHorizontal: 5,
+                            }}>
+                            Get up to 50% off
+                          </Text>
+                          <Text
+                            style={{
+                              color: changeTwo ? COLORS.white : COLORS.darkGray,
+                              fontSize: horizScale(12),
+
+                              fontFamily: 'Segoe UI',
+                              paddingHorizontal: 5,
+                            }}>
+                            Get up to 50% off
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  }}
+                />
+              </View>
+            ) : null}
+            {/* <View
+              style={{
+                flexDirection: 'row',
+                marginTop: 5,
+              }}>
+              <View
+                style={{
+                  alignSelf: 'flex-start',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginTop: 15,
+                  marginStart: 15,
+                }}>
+                <Switch
+                  trackColor={{false: COLORS.darkGray, true: COLORS.primary}}
+                  thumbColor={switches ? COLORS.primary : '#e7e7e7'}
+                  ios_backgroundColor="#3e3e3e"
+                  onValueChange={toggleWifiSwitch => {
+                    setSwitches(!switches);
+                  }}
+                  style={{}}
+                  value={switches}
+                />
+                <Text
+                  style={{
+                    color: changeTwo ? COLORS.white : COLORS.darkGray,
+                    fontSize: horizScale(13),
+
+                    fontFamily: 'Segoe UI',
+                    paddingHorizontal: 2,
+                  }}>
+                  Non-Veg
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  alignSelf: 'flex-start',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginTop: 15,
+                  marginStart: 15,
+                }}>
+                <Switch
+                  trackColor={{false: COLORS.darkGray, true: COLORS.primary}}
+                  thumbColor={switches ? COLORS.primary : '#e7e7e7'}
+                  ios_backgroundColor="#3e3e3e"
+                  onValueChange={toggleWifiSwitch => {
+                    setSwitches(!switches);
+                  }}
+                  style={{}}
+                  value={switches}
+                />
+                <Text
+                  style={{
+                    color: changeTwo ? COLORS.white : COLORS.darkGray,
+                    fontSize: horizScale(13),
+
+                    fontFamily: 'Segoe UI',
+                    paddingHorizontal: 2,
+                  }}>
+                  Veg
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  alignSelf: 'flex-start',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginTop: 15,
+                  marginStart: 15,
+                }}>
+                <Switch
+                  trackColor={{false: COLORS.darkGray, true: COLORS.primary}}
+                  thumbColor={switches ? COLORS.primary : '#e7e7e7'}
+                  ios_backgroundColor="#3e3e3e"
+                  onValueChange={toggleWifiSwitch => {
+                    setSwitches(!switches);
+                  }}
+                  style={{}}
+                  value={switches}
+                />
+                <Text
+                  style={{
+                    color: changeTwo ? COLORS.white : COLORS.darkGray,
+                    fontSize: horizScale(13),
+
+                    fontFamily: 'Segoe UI',
+                    paddingHorizontal: 2,
+                  }}>
+                  Eggs
+                </Text>
+              </View>
+            </View> */}
+            {shimmerLoading ? (
+              <ExpandableComponentSkeleton />
+            ) : (
+              <>
+                <FlatList
+                  style={{
+                    marginTop: 20,
+                  }}
+                  ref={flatListRef}
+                  initialScrollIndex={menuIndex}
+                  // initialScrollIndex={menuIndex}
+                  extraData={detailsData}
+                  data={detailsData}
+                  // data={[1, 2, 3, 4, 2, 5, 56, 56, 65, 65, 6, 656, 636, 6, 7]}
+                  // renderItem={renderExpandableItem}
+                  renderItem={renderExpandableItemTwo}
+                  // renderItem={({item, index}) => {
+                  //   return (
+                  //     <Text
+                  //       style={{
+                  //         width: '100%',
+                  //         backgroundColor: COLORS.grey,
+                  //         paddingVertical: 30,
+                  //         fontSize: 20,
+                  //       }}>
+                  //       {item}
+                  //     </Text>
+                  //   );
+                  // }}
+                />
+                {/* <ScrollView
+                  style={{
+                    marginTop: 20,
+                  }}>
+                  {detailsData.map((item, key) => (
+                    <ExpandableComponent
+                      key={item?.product_name}
+                      onClickFunction={() => {
+                        updateLayout(key);
+                      }}
+                      onAddFunction={items => {
+                        setPData(items);
+                        // console.log('items', JSON.stringify(items));
+                        setTotalMoney(items?.product_price);
+                        setOptionAddonData([]);
+                        getRestProductOptionMenu(item);
+                      }}
+                      item={item}
+                    />
+                  ))}
+                </ScrollView> */}
+              </>
+            )}
+
+            <View
+              style={{
+                flexDirection: 'row',
+                marginTop: 50,
+                backgroundColor: '#e7e7e7',
+                justifyContent: 'space-between',
+                paddingBottom: 5,
+              }}>
+              <View>
+                <Text
+                  style={{
+                    marginStart: 15,
+                    marginTop: 10,
+                    fontFamily: 'Segoe UI',
+                    fontSize: 12,
+                    color: COLORS.black,
+                    opacity: 0.8,
+                  }}>
+                  License Number
+                </Text>
+                <Text
+                  style={{
+                    marginStart: 15,
+                    marginTop: 15,
+                    fontFamily: 'Segoe UI',
+                    fontSize: 12,
+                    color: COLORS.black,
+                    opacity: 0.8,
+                  }}>
+                  {receivedItem?.fssai_lic_no}
+                </Text>
+              </View>
+              <Image
+                source={{
+                  uri: 'https://seeklogo.com/images/F/fssai-logo-C7400699BD-seeklogo.com.png',
+                }}
+                style={{
+                  width: 65,
+                  height: 65,
+                  resizeMode: 'center',
+                  marginEnd: 15,
+                }}
+              />
+            </View>
+          </>
+        ) : changeTwo ? (
+          <View>
+            {/* <View>
+              <Text style={[style.moodText]}>Offers</Text>
+            </View>
+            <FlatList
+              data={[1, 2, 3]}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              renderItem={({item, index}) => {
+                return (
+                  <View
+                    style={{
+                      backgroundColor: '#e5edff',
+                      marginStart: index == 0 ? SIZES.padding + 5 : 10,
+                      marginEnd:
+                        index == offerData.length - 1 ? SIZES.padding + 2 : 0,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      flexDirection: 'row',
+                      paddingVertical: 5,
+                      paddingHorizontal: 5,
+                      borderRadius: 10,
+                      marginTop: 10,
+                    }}>
+                    <Image
+                      source={icons.blue_offer}
+                      style={{
+                        width: 30,
+                        height: 30,
+                        margin: 5,
+                      }}
+                    />
+                    <View>
+                      <Text
+                        style={{
+                          color: COLORS.darkGray,
+                          fontSize: horizScale(15),
+                          fontFamily: 'Segoe UI',
+                          paddingHorizontal: 5,
+                        }}>
+                        Get up to 50% off
+                      </Text>
+                      <Text
+                        style={{
+                          color: COLORS.darkGray,
+                          fontSize: horizScale(12),
+
+                          fontFamily: 'Segoe UI',
+                          paddingHorizontal: 5,
+                        }}>
+                        Get up to 50% off
+                      </Text>
+                    </View>
+                  </View>
+                );
+              }}
+            /> */}
+            <Text
+              style={{
+                fontFamily: 'Segoe UI',
+                fontSize: 16,
+                color: COLORS.grey,
+                marginTop: 25,
+                marginStart: 15,
+              }}>
+              No. of Guests
+            </Text>
+            {/* <ScrollView
+              style={{
+                width: '100%',
+                backgroundColor: '#f5f5f5',
+                marginVertical: 10,
+              }}
+              horizontal
+              showsHorizontalScrollIndicator={false}>
+              <Text style={styles.guestNum}>1</Text>
+              <Text
+                style={[
+                  styles.guestNum,
+                  {
+                    backgroundColor: '#f5e4e6',
+                    color: COLORS.black,
+                  },
+                ]}>
+                2
+              </Text>
+            </ScrollView> */}
+            <View
+              style={{
+                width: '100%',
+                // height: 50,
+                // marginStart: 10,
+                backgroundColor: '#f5f5f5',
+                marginVertical: 10,
+              }}>
+              <FlatList
+                extraData={guestNum}
+                data={guestNum}
+                renderItem={renderGuestNum}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              />
+            </View>
+            <Text
+              style={{
+                fontFamily: 'Segoe UI',
+                fontSize: 16,
+                color: COLORS.grey,
+                marginTop: 20,
+                marginStart: 15,
+              }}>
+              Day of Booking
+            </Text>
+            <View
+              style={{
+                width: '100%',
+                // height: 50,
+                // marginStart: 10,
+                backgroundColor: '#f5f5f5',
+                marginVertical: 10,
+              }}>
+              <FlatList
+                extraData={dayNameYear}
+                data={dayNameYear}
+                renderItem={renderDayNameNum}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              />
+            </View>
+
+            {selectedDate && (
+              <>
+                <Text
+                  style={{
+                    fontFamily: 'Segoe UI',
+                    fontSize: 16,
+                    color: COLORS.grey,
+                    marginTop: 20,
+                    marginStart: 15,
+                  }}>
+                  Time of Booking
+                </Text>
+
+                <View
+                  style={{
+                    width: '100%',
+                    backgroundColor: '#f5f5f5',
+                    marginVertical: 10,
+                  }}>
+                  <FlatList
+                    extraData={flatListTimeSlotArr}
+                    data={flatListTimeSlotArr}
+                    renderItem={renderTimeNum}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  />
+                </View>
+              </>
+            )}
+
+            <Text
+              style={{
+                fontFamily: 'Segoe UI',
+                fontSize: 16,
+                color: COLORS.grey,
+                marginTop: 20,
+                marginStart: 15,
+              }}>
+              Your Details
+            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: '#f5f5f5',
+                marginVertical: 5,
+                paddingVertical: 10,
+              }}>
+              <View>
+                <Text
+                  style={{
+                    fontFamily: 'Segoe UI Bold',
+                    fontSize: 18,
+                    color: COLORS.grey,
+                    marginStart: 15,
+                  }}>
+                  {name}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'Segoe UI Bold',
+                    fontSize: 18,
+                    color: COLORS.grey,
+                    marginStart: 15,
+                  }}>
+                  {mobile}
+                </Text>
+              </View>
+              <Text
+                onPress={() => {
+                  closeChangeModal();
+                }}
+                style={{
+                  fontFamily: 'Segoe UI',
+                  fontSize: 14,
+                  color: '#0638ff',
+                  marginEnd: 15,
+                  marginStart: 15,
+                  textDecorationLine: 'underline',
+                }}>
+                Change
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                if (selectedGuestNumber == '') {
+                  ShowMessage('Please select no. of guest');
+                } else if (selectedBookingDate == '') {
+                  ShowMessage('Please select booking date');
+                } else if (selectedTimeSlot == '') {
+                  ShowMessage('Please select time slot');
+                } else {
+                  setBookNowLoading(true);
+                  setTimeout(() => {
+                    navigation.navigate('BookingStatus', {
+                      fullItem: {
+                        name,
+                        mobile,
+                        selectedGuestNumber,
+                        selectedBookingDate,
+                        selectedTimeSlot,
+                        receivedItem,
+                      },
+                    });
+                    setBookNowLoading(false);
+                  }, 1500);
+                }
+              }}
+              activeOpacity={0.8}
+              style={{
+                paddingHorizontal: 50,
+                backgroundColor: COLORS.primary,
+                alignItems: 'center',
+                alignSelf: 'center',
+                justifyContent: 'center',
+                paddingVertical: 10,
+                borderRadius: 10,
+                marginVertical: 10,
+              }}>
+              <Text
+                style={{
+                  fontFamily: 'Segoe UI Bold',
+                  fontSize: 22,
+                  color: COLORS.white,
+                }}>
+                Book Now
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+      </ScrollView>
+      {changeOne ? (
+        <>
+          <TouchableOpacity
+            onPress={() => {
+              closeFilterModal();
+            }}
+            style={[
+              style.menuBtn,
+              {
+                bottom: sumQuantity > 0 && sumTotal > 0 ? 65 : 40,
+              },
+            ]}>
+            <Image style={style.leafImage} source={icons.dishicon} />
+            <Text style={style.menuText}>Browse Menu</Text>
+          </TouchableOpacity>
+          {sumQuantity > 0 ? (
+            <View
+              style={{
+                padding: 10,
+                backgroundColor: COLORS.primary,
+                position: 'relative',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                flexDirection: 'row',
+                // flex: 1,
+                justifyContent: 'space-between',
+              }}>
+              <View>
+                <Text
+                  style={{
+                    fontFamily: 'Segoe UI Bold',
+                    color: COLORS.white,
+                  }}>
+                  {cartItemCount?.length} ITEM
+                </Text>
+
+                <Text
+                  style={{
+                    marginTop: 5,
+
+                    fontFamily: 'Segoe UI Bold',
+                    color: COLORS.white,
+                  }}>
+                  ₹ {sumTotal} plus taxes
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('Cart');
+                }}
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Text
+                  style={{
+                    marginTop: 5,
+
+                    fontFamily: 'Segoe UI Bold',
+                    color: COLORS.white,
+                    fontSize: 16,
+                  }}>
+                  Proceed to checkout
+                </Text>
+                <Image
+                  source={icons.back_arrow}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    tintColor: '#fff',
+                    marginStart: 5,
+                    marginTop: 5,
+                    resizeMode: 'center',
+                    transform: [
+                      {
+                        rotate: '180deg',
+                      },
+                    ],
+                  }}
+                />
+              </TouchableOpacity>
+            </View>
+          ) : null}
+        </>
+      ) : null}
+      {renderFilterModal()}
+      {renderAddModal()}
+      {renderChangeModal()}
+    </SafeAreaView>
+  );
+};
+
+export default RestaurantDetails;
+
+const styles = StyleSheet.create({
+  bookingDay: {
+    paddingHorizontal: 20,
+    paddingVertical: 5,
+    backgroundColor: COLORS.primary,
+    borderRadius: 5,
+    marginVertical: 5,
+    marginEnd: 5,
+    marginStart: 15,
+    color: COLORS.white,
+    fontSize: 16,
+    textAlign: 'center',
+    fontFamily: 'Segoe UI Bold',
+  },
+  star_logo: {
+    width: 12,
+    height: 12,
+
+    resizeMode: 'cover',
+  },
+  guestNum: {
+    paddingHorizontal: 25,
+    paddingVertical: 10,
+    backgroundColor: COLORS.primary,
+    borderRadius: 5,
+    marginVertical: 5,
+    marginEnd: 10,
+    marginStart: 15,
+    color: COLORS.white,
+    fontFamily: 'Segoe UI',
+    fontSize: 16,
+  },
+  circle: {
+    height: 20,
+    width: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ACACAC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+
+  checkedCircle: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: COLORS.primary,
+  },
+
+  addminusView: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 5,
+  },
+  countText: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    backgroundColor: '#F4F2FF',
+  },
+  container: {
+    flex: 1,
+  },
+  titleText: {
+    flex: 1,
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  header: {
+    backgroundColor: COLORS.lightGray3,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 3,
+  },
+  headerText: {
+    fontSize: 16,
+    fontFamily: 'Segoe UI Bold',
+    color: COLORS.black,
+  },
+  separator: {
+    height: 0.5,
+    backgroundColor: '#808080',
+    width: '95%',
+    marginLeft: 16,
+    marginRight: 16,
+  },
+  text: {
+    fontSize: 16,
+    color: '#606070',
+    padding: 10,
+  },
+  content: {
+    paddingLeft: 10,
+    paddingRight: 10,
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+  },
+  distance_logo: {
+    width: 15,
+    height: 15,
+    resizeMode: 'cover',
+    alignSelf: 'flex-start',
+  },
+  distance: {
+    alignSelf: 'flex-start',
+    color: COLORS.black,
+    marginTop: 0,
+    fontFamily: 'Segoe UI',
+    fontSize: 14,
+    marginStart: 5,
+  },
+  fav: {
+    right: 5,
+    top: 5,
+    position: 'absolute',
+    borderRadius: 50,
+    backgroundColor: '#f5f5f5',
+  },
+});
+
+/**
+ * 
+ * home - api end point
+ * 
+ * "vendors": [
+            {
+                "name": "Delhi Darbar",
+                "image": "https://web10technologies.com/Chelab_full_project/public/vendors/logo-A4ihwZeMct6325d0916ec1b.jpeg",
+                "vendor_ratings": 0,
+                "id": 6,
+                "lat": 24.474502000000001089574652723968029022216796875,
+                "long": 74.8733030000000070458554546348750591278076171875,
+                "distance": 1.100000000000000088817841970012523233890533447265625,
+                "is_like": false
+            }]
+
+   /// provide as it is response  ===>>>
+
+   getRestaurantByCategory   ---api end point 
+
+    {"name":"v Family Restaurant","image":"","banner_image":[""],"vendor_ratings":0,
+    "vendor_food_type":"1","deal_categories":"1,2,3,4","id":3,"fssai_lic_no":"46546446446",
+    "table_service":"0","distance":1.2,"isClosed":true,"categories":["Pizza","Burger","Pasta","Chat"],
+    "is_like":true,"imageUrl":"https://web10technologies.com/Chelab_full_project/public/vendor-banner/"}
+
+    // missing key
+    "lat": 
+                "long": 
+                "distance":
+
+ */
+
+/**
+ * firebase version 14 ver  14.11.1
+ */
+
+/*****************
+   // return item?.products?.length >= 1 ? (
+                    //   <ExpandableComponent
+                    //     key={item?.product_name}
+                    //     onClickFunction={() => {
+                    //       updateLayout(index);
+                    //     }}
+                    //     onAddFunction={(items, _idx) => {
+                    //       if (items?.customizable == 'true') {
+                    //         console.log(receivedItem?.isClosed, 'is Closed');
+                    //         setPData(items);
+                    //         console.log('items', JSON.stringify(items));
+                    //         setTotalMoney(items?.product_price);
+                    //         setOptionAddonData([]);
+                    //         setAddItemIndex(items?.product_id + '');
+                    //         getRestProductOptionMenu(item, items);
+                    //       } else {
+                    //         addToCartNotCustomizable(
+                    //           items,
+                    //           items?.product_id + '',
+                    //         );
+                    //       }
+                    //     }}
+                    //     onPlus={onPlus}
+                    //     onMinus={onMinus}
+                    //     item={item}
+                    //     onFavPress={(_im, _in) => {
+                    //       updateFavUnFavProduct(_im, _in);
+                    //     }}
+                    //   />
+                    // ) : null;
+
+
+LIVE Streaming Application concept 
+
+1. Needed live streaming & google map distance 
+
+2. Opening app will land asking GPS location on and will ask phone number entering and otp verify   -- firebase
+
+3. User will enter next page and will select categories as given for eg: like sports, entertainment,
+technology, science, etc. 
+
+4. Next page will be showing two buttons on the top like search live and go live 
+
+5. On clicking search live it will ask for distance like from to to and go live it will automatically
+detect location and user will go live 
+
+6. in search live whatever route user will select pop ups for live user will be shown and clicking on
+that user notification will go to live user whether to allow user to show live streaming or not 
+
+7. Report user function needed  -- instagram insight section
+
+8. login registration
+
+now you check with your development team and let me know budget and timeline asap
+ */
+
+//                     'lat'            => 'required|numeric',
+//                     'lng'            => 'required|numeric',
+//                     'vendor_offset'  => 'required|numeric',
+//                     'vendor_limit'   => 'required|numeric',
+//                     'product_offset' => 'required|numeric',
+//                     'product_limit'  => 'required|numeric',
+
+
+
+1. chef home api products not coming  --- agar products disable hai to enable kar do
+2. getChefDetailPage     - - product me vendor id hi nhi hai kaise pata chalega kis vendor hai, description missing 
+3. origin missing from chef profile
+4. vendor-coupon-details   -  api me null aa raha hai
+5. procode-coupon-apply    - api me 500 internal server error
+6. update user address
+7. delete user address
+8. dine-out-booking       - api me 500 internal server error
+9. jin restaurant me data nhi hai vo nhi aane chahiye 
+10. save-vendor-rating-review     -  api me user id nhi jaa rahi hai pata kaise chalega kon ne rating di hai
+11. vendor id 1 par coupon add kiya hai nhi aa raha hai   vendor name -  jaini food
+12.getChefProfile
+origin missing
+
+
+13. chef-home
+origin missing
+
+14. getChefByCategory
+origin missing
+long image missing
+
+15. get-vendor-rating-review
+is api me rating ke hisaab se data aa raha hai par saath hi saath sare restaurant bhi aana chahiye  -------   jo ki rating aur review jyada se kam ka rahega
+
+16.platform_fees  -  ------   hat gya hai view cart me se  

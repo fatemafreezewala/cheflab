@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "180746879110",
+    "firebase_url": "https://cheflab-user-default-rtdb.firebaseio.com",
+    "project_id": "cheflab-user",
+    "storage_bucket": "cheflab-user.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:180746879110:android:b4e918b244738b782e5107",
+        "android_client_info": {
+          "package_name": "com.cheflab"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "180746879110-sq1muk3jekc4rjhme7tka1jrrn4v17og.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cheflab",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "180746879110-pppik9v76rlhp10qc8v8fg98u5mh41pm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBO_UswzlCAiiDJUfZDv4hkhlIBf1F39Eo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "180746879110-pppik9v76rlhp10qc8v8fg98u5mh41pm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

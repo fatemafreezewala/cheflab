@@ -1,0 +1,497 @@
+/** PENDING TASK */
+/**
+ * fix navigation of app make it on one place
+ * fix lag in app
+ * add to cart functionality in every screen of restaurant module
+ * remove from cart functionality in every screen of restaurant module
+ * fix restaurant close/open behavior
+ * banner on top 3 second delay and first banner is coming
+ * fix each and every bug on restaurant details screen (include add to cart, api late response, api response true/false )
+ * browse menu button
+ * on browse menu item press user will navigate to selected item category
+ * slider banner workable only one that is visible on screen
+ * implement filter functionality
+ * cart screen fix all issue (include late shimmer effect, promo code, proper calculations)
+ * fix all issue in restaurant page
+ * dish details page fix all issue
+ * implement functionality of like / dislike on every screen
+ * implement radio button in customizable products
+ * fix navigation to cart on every screen
+ * fix open / close behavior of expandable components
+ * fix chef profile
+ * fix user profile
+ * fix chef details page all issues
+ * fix chef list page
+ * implement filter functionality on chef list
+ * implement search functionality in chef
+ * implement all apis
+ * fix dish details screen in chef section
+ *
+ *
+ * // pending
+ * implement tracking functionality in both user and driver app
+ * implement pub nub
+ * order section
+ *
+ *
+ *
+ */
+
+/**
+ * api required -
+ *
+ * 1. get order list of particular user id - POST
+ * 2. get user profile - POST
+ * 3. get favorites - POST
+ * 4. get saved address - POST
+ * 5. submit feedback - POST
+ * 6. privacy policy - GET
+ * 7. terms and conditions - GET
+ * 8. cancellation policy - GET
+ * 9. get faqs  - GET
+ * 10. get about us - GET
+ * 11. get contact us info - GET
+ * 12. update profile - POST - params - name, email, alternate phone number
+ * - mobile number need not to be update
+ * 13. get wallet details - POST - give wallet balance and all transactions of wallet in array
+ * 14. search order api
+ * 15. filter api
+ * 16. get filter option (like Nearest Restaurant, Top Rated, Non Veg) like this
+ *
+ * /*  provide as much information you have in backend
+ *
+ *
+ * ------------------------------------- API MISSING POINT -----------------------------
+ *
+ * 1. home - api end point
+ * in vendor array
+ *
+ * missing
+ * 1. banner array
+ * 2. open close status
+ * 3. type (restaurant is veg/non/egg)
+ *
+ * in product array
+ *
+ * missing
+ * 1. rating and review
+ * 2. vendor id
+ * 3. category (north indian / south indian)
+ * 4. description
+ * 5. chilli level
+ *
+ *
+ * //// chilli level is missing in every product api/array     pls add it
+ *
+ *
+ *getRestaurantDetailByFoodtype --------------------- 
+ getRestaurantByCuisines =========================
+ restaurantVendorCoupon ===
+ */
+
+/**
+
+https://drive.google.com/file/d/1fq2tHM2q7WUb51AEo-Na0HVYDG_mJoVl/view?usp=share_link
+
+ 
+https://drive.google.com/file/d/1BMQFpxaQ3YasMXNQb8G514nfYF1d1iI0/view?usp=share_link
+
+
+https://drive.google.com/file/d/1vRhVfjwnOp0Xn8JxoA6yfDGBBPV4Wrn-/view?usp=share_link
+
+*/
+
+/***
+
+cancel order api 
+post 
+params = user id,order id
+
+one extra params - isCancelledWithin30Second 
+
+if isCancelledWithin30Second  is true 
+then user user will get all money refunded in wallet if payment mode is online
+
+if isCancelledWithin30Second  is false
+then user will not get money back and 100% cancellation fee will be applicable
+
+*/
+
+/****
+
+     const getOneTimeLocation = () => {
+    Geolocation.getCurrentPosition(
+      (position) => {
+        const currentLongitude = JSON.stringify(position.coords.longitude);
+
+        const currentLatitude = JSON.stringify(position.coords.latitude);
+
+        let coords = position.coords;
+        setLocation(coords);
+        if (coords) {
+          let {longitude, latitude} = coords;
+
+          setmapRegion({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            latitudeDelta: 0,
+            longitudeDelta: 0,
+          });
+        }
+        let truncLat = parseFloat(currentLatitude).toFixed(5);
+        let truncLon = parseFloat(currentLongitude).toFixed(5);
+
+        setCurrentLongitude(truncLon);
+        setCurrentLatitude(truncLat);
+        // console.log('lat lon , ', truncLat + ' <<>> ' + truncLon);
+        if (count < 2) {
+          fetch(
+            'https://maps.googleapis.com/maps/api/geocode/json?address=' +
+              truncLat +
+              ',' +
+              truncLon +
+              '&key=' +
+              apiKey,
+          )
+            .then((response) => response.json())
+            .then((responseJson) => {
+              console.log(
+                'RECEIVED ADDRESS FROM API -> ',
+                JSON.stringify(responseJson),
+              );
+              // getFEID(user)
+              sendLatLong(truncLat, truncLon);
+
+              if (responseJson.status === 'OK') {
+                // sendLatLong(truncLat, truncLon);
+
+                if (responseJson.results.length > 8) {
+                  console.log(' greater then if 8');
+                  setCount(count + 1);
+                  setCurrentAddress(responseJson.results[0].formatted_address);
+                  if (responseJson.results[5].address_components.length > 4) {
+                    console.log(' greate then if 4');
+                    let str = `${responseJson.results[5].address_components[1].long_name}, ${responseJson.results[5].address_components[3].long_name}, ${responseJson.results[5].address_components[4].long_name}`;
+                    setCity(str);
+                  } else {
+                    console.log(' greate then else 5');
+                    let str = `${responseJson.results[5].address_components[1].long_name}, ${responseJson.results[5].address_components[2].long_name}, ${responseJson.results[5].address_components[3].long_name}`;
+                    setCity(str);
+                  }
+                }
+                if (responseJson.results.length == 6) {
+                  console.log('equal to 6');
+                  setCount(count + 1);
+                  setCurrentAddress(responseJson.results[0].formatted_address);
+                  let str = `${responseJson.results[1].address_components[0].long_name}, ${responseJson.results[1].address_components[2].long_name}, ${responseJson.results[1].address_components[3].long_name}`;
+                  setCity(str);
+                }
+                if (responseJson.results.length == 7) {
+                  console.log('equal to 7');
+                  setCount(count + 1);
+                  setCurrentAddress(responseJson.results[0].formatted_address);
+                  let str = `${responseJson.results[1].address_components[0].long_name}, ${responseJson.results[1].address_components[2].long_name}, ${responseJson.results[1].address_components[3].long_name}`;
+                  setCity(str);
+                }
+                if (responseJson.results.length == 8) {
+                  console.log(' greate then else 8');
+                  setCount(count + 1);
+                  setCurrentAddress(responseJson.results[0].formatted_address);
+                  let str = `${responseJson.results[5].address_components[0].long_name}, ${responseJson.results[5].address_components[1].long_name}, ${responseJson.results[5].address_components[2].long_name}`;
+                  setCity(str);
+                }
+              }
+            })
+            .catch((err) => {
+              console.log('ADDRESS GEOCODE ERROR!! => ' + err);
+            });
+        }
+
+        // console.log('trunc lat  =->', truncLat + ' <<>> ' + truncLon);
+        // if (count < 2) {
+        //   fetch(
+        //     'https://maps.googleapis.com/maps/api/geocode/json?address=' +
+        //       truncLat +
+        //       ',' +
+        //       truncLon +
+        //       '&key=' +
+        //       apiKey,
+        //   )
+        //     .then(response => response.json())
+        //     .then(responseJson => {
+        // console.log(
+        // 'RECEIVED ADDRESS FROM API _> ',
+        // JSON.stringify(responseJson),
+        // );
+        //       if (responseJson.status === 'OK') {
+        //         if (responseJson.results.length > 8) {
+        //           setCount(count + 1);
+        //           setCurrentAddress(responseJson.results[0].formatted_address);
+        //           if (responseJson.results[5].address_components.length > 4) {
+        //             let str = `${responseJson.results[5].address_components[1].long_name}, ${responseJson.results[5].address_components[3].long_name}, ${responseJson.results[5].address_components[4].long_name}`;
+        //             setCity(str);
+        //           } else {
+        //             let str = `${responseJson.results[5].address_components[1].long_name}, ${responseJson.results[5].address_components[2].long_name}, ${responseJson.results[5].address_components[3].long_name}`;
+        //             setCity(str);
+        //           }
+        //         } else {
+        //           setCount(count + 1);
+        //           setCurrentAddress(responseJson.results[0].formatted_address);
+        //           let str = `${responseJson.results[6].address_components[1].long_name}, ${responseJson.results[5].address_components[2].long_name}, ${responseJson.results[5].address_components[3].long_name}`;
+        //           setCity(str);
+        //         }
+        //       }
+        //     })
+        //     .catch(err => {
+        //       console.log('ADDRESS GEOCODE ERROR!! => ' + JSON.stringify(err));
+        //     });
+        // }
+      },
+      (error) => {
+        // setLocationStatus(error.message);
+      },
+      {
+        // enableHighAccuracy: true,
+        timeout: 30000,
+        // maximumAge: 1000,
+      },
+    );
+  };
+
+
+
+
+******* product quantity not updating **********
+
+
+add to cart
+https://web10technologies.com/Chelab_full_project/public/api/add-to-cart
+
+{
+  "user_id": "3",
+  "vendor_id": "1",
+  "products": [
+    {
+      "product_id": "3",
+      "product_qty": "6"
+    }
+  ]
+}
+
+response 
+
+{
+    "status": true,
+    "message": "Data Get Successfully",
+    "response": {
+        "cart_id": 3
+    }
+}
+
+
+update  cart 
+https://web10technologies.com/Chelab_full_project/public/api/update-cart
+
+
+request
+
+{
+    "cart_id": "3",
+    "user_id": "3",
+    "vendor_id": "1",
+    "products": [
+        {
+            "product_id": "3",
+            "product_qty": "14",
+            "addons": [
+                {
+                    "addon_id": 3,
+                    "addon_qty": 7
+                }
+            ],
+            "variants": [
+                {
+                    "variant_id": 15,
+                    "variant_qty": 8
+                }
+            ]
+        }
+    ]
+}
+
+
+
+response 
+{
+    "status": true,
+    "message": "Data Get Successfully",
+    "response": {
+        "cart_id": 3
+    }
+}
+
+
+
+******************************* check 2nd number of object in cart array of view cart response
+view cart api 
+https://web10technologies.com/Chelab_full_project/public/api/view-cart
+
+
+request
+{
+    "user_id": "3"
+}
+
+response 
+
+
+{
+    "status": true,
+    "message": "Data Get Successfully",
+    "response": {
+        "cart_id": 3,
+        "cart": [
+            {
+                "variants": [
+                    {
+                        "variant_name": "2222",
+                        "variant_price": "26.00",
+                        "variant_id": 6678,
+                        "added": false
+                    }
+                ],
+                "addons": [
+                    {
+                        "id": 4,
+                        "addon": "Chopped Onion",
+                        "price": "10.00",
+                        "added": false
+                    },
+                    {
+                        "id": 1481,
+                        "addon": "test",
+                        "price": "200.00",
+                        "added": false
+                    },
+                    {
+                        "id": 1483,
+                        "addon": "Brownies",
+                        "price": "25.00",
+                        "added": false
+                    }
+                ],
+                "product_id": 2,
+                "product_name": "Burger",
+                "product_qty": 3,
+                "product_image": "https://web10technologies.com/Chelab_full_project/public/products/1665854004-restaurant-product-908.jpg",
+                "category": 88,
+                "menu_id": 1,
+                "dis": "Burger",
+                "type": "veg",
+                "product_price": "150.00",
+                "customizable": "true",
+                "product_for": "3",
+                "product_rating": "0"
+            },
+            {
+                "variants": [
+                    {
+                        "variant_name": "3 baati",
+                        "variant_price": "250.00",
+                        "variant_id": 14,
+                        "added": false
+                    },
+                    {
+                        "variant_name": "2 Baati",
+                        "variant_price": "150.00",
+                        "variant_id": 15,
+                        "added": true,
+                        "qty": 8
+                    },
+                    {
+                        "variant_name": "1 Baati",
+                        "variant_price": "100.00",
+                        "variant_id": 16,
+                        "added": false
+                    }
+                ],
+                "addons": [
+                    {
+                        "id": 3,
+                        "addon": "Salt",
+                        "price": "5.00",
+                        "added": true,
+                        "qty": 7
+                    },
+                    {
+                        "id": 4,
+                        "addon": "Chopped Onion",
+                        "price": "10.00",
+                        "added": false
+                    }
+                ],
+                "product_id": 3,
+                "product_name": "Daal Bati",
+                "product_qty": 6,
+                "product_image": "https://web10technologies.com/Chelab_full_project/public/products/1665854699-restaurant-product-299.jpg",
+                "category": 88,
+                "menu_id": 1,
+                "dis": "Dal Bati",
+                "type": "veg",
+                "product_price": "250.00",
+                "customizable": "true",
+                "product_for": "3",
+                "product_rating": "0"
+            }
+        ],
+        "vendor": {
+            "id": 1,
+            "name": "jaini food",
+            "owner_name": null,
+            "email": "jainifood@gmail.com",
+            "password": "$2y$10$DAE6r6J29Y075HIGwihpXep1iEvG0xrG/pKXelje2uUIE.CS6k5ke",
+            "dob": null,
+            "experience": null,
+            "is_online": 1,
+            "vendor_type": "restaurant",
+            "deal_categories": "88,91,92,99,101",
+            "deal_cuisines": "1,2,4,5,8,11,21,22",
+            "status": "1",
+            "mobile": "9424567807",
+            "pincode": "452001",
+            "address": "bchbckshcbmscbhjav",
+            "fssai_lic_no": "22664113313",
+            "gst_available": "1",
+            "gst_no": null,
+            "tax": "5",
+            "other_document": null,
+            "other_document_image": null,
+            "image": "logo-4KWdksbVeK6348326dad336.png",
+            "profile_image": "",
+            "banner_image": "[\"1668772550-banner-271.png\"]",
+            "speciality": null,
+            "licence_image": null,
+            "wallet": "0.00",
+            "commission": "9",
+            "vendor_ratings": 4,
+            "review_count": 4,
+            "vendor_food_type": "1",
+            "long": 75.887257000000005291440174914896488189697265625,
+            "lat": 22.724180000000000489990270580165088176727294921875,
+            "pancard_number": "",
+            "pancard_image": "",
+            "fcm_token": null,
+            "aadhar_number": "",
+            "aadhar_card_image": "",
+            "table_service": "1",
+            "is_all_setting_done": 1,
+            "bio": null,
+            "deleted_at": null,
+            "created_at": "2022-10-13T15:39:04.000000Z",
+            "updated_at": "2022-11-18T11:55:50.000000Z"
+        },
+        "wallet_amount": 7869,
+        "max_cod_amount": ""
+    }
+}
+**/
