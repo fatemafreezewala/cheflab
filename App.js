@@ -1,7 +1,7 @@
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import React, {useEffect, useState} from 'react';
-import {LogBox, StyleSheet, DeviceEventEmitter} from 'react-native';
+import {LogBox, StyleSheet, SafeAreaView} from 'react-native';
 import BottomTabNav from './src/bottom_tab_nav';
 import Login from './src/screens/Auth/Login/index';
 import Signup from './src/screens/Auth/Signup/index';
@@ -153,67 +153,72 @@ const App = () => {
   }
 
   return (
-    <Provider store={store}>
-      <AppContext.Provider value={userSettings}>
-        <NavigationContainer>
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-            }}>
-            <Stack.Screen name="Auth" component={AuthStack} />
-            <Stack.Screen name="MainContainer" component={BottomTabNav} />
-            <Stack.Screen name="MainTopNav" component={MainTopNav} />
+    <SafeAreaView style={{flex: 1}}>
+      <Provider store={store}>
+        <AppContext.Provider value={userSettings}>
+          <NavigationContainer>
+            <Stack.Navigator
+              screenOptions={{
+                headerShown: false,
+              }}>
+              <Stack.Screen name="Auth" component={AuthStack} />
+              <Stack.Screen name="MainContainer" component={BottomTabNav} />
+              <Stack.Screen name="MainTopNav" component={MainTopNav} />
 
-            <Stack.Screen name="Restaurant" component={Restaurant} />
-            <Stack.Screen name="RestaurantList" component={List} />
-            <Stack.Screen name="ChefSearch" component={ChefSearch} />
-            <Stack.Screen name="Search" component={Search} />
-            <Stack.Screen name="Chef" component={Chef} />
-            <Stack.Screen name="ChefList" component={ChefList} />
-            <Stack.Screen name="Profile" component={Profile} />
-            <Stack.Screen name="DishInformation" component={DishInformation} />
-            {/* <Stack.Screen name="Search" component={Search} /> */}
-            <Stack.Screen name="ChefDetails" component={ChefDetails} />
-            <Stack.Screen name="DineOut" component={DineOut} />
-            <Stack.Screen
-              name="RestaurantDetails"
-              component={RestaurantDetails}
-            />
-            {/* <Stack.Screen name="Chef" component={ChefNavigation} /> */}
-            <Stack.Screen name="BookingStatus" component={BookingStatus} />
-            <Stack.Screen name="Cart" component={Cart} />
-            <Stack.Screen name="Payment" component={Payment} />
-            <Stack.Screen name="OrderPlaced" component={OrderPlaced} />
-            <Stack.Screen name="OrderCancelled" component={OrderCancelled} />
-            <Stack.Screen name="About" component={About} />
-            <Stack.Screen name="Favorites" component={Favorites} />
-            <Stack.Screen name="SavedAddress" component={SavedAddress} />
-            <Stack.Screen name="EditProfile" component={EditProfile} />
-            <Stack.Screen name="AboutUs" component={AboutUs} />
-            <Stack.Screen name="ContactUs" component={ContactUs} />
-            <Stack.Screen name="FAQS" component={FAQS} />
-            <Stack.Screen name="RechargeWallet" component={RechargeWallet} />
-            <Stack.Screen name="DineoutSearch" component={DineoutSearch} />
-            <Stack.Screen name="Maps" component={Maps} />
-            <Stack.Screen
-              name="TermsAndConditions"
-              component={TermsAndConditions}
-            />
-            <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
-            <Stack.Screen
-              name="CancellationPolicy"
-              component={CancellationPolicy}
-            />
-            <Stack.Screen
-              name="RestDishInformation"
-              component={RestDishInformation}
-            />
-            <Stack.Screen name="TrackOrder" component={TrackOrder} />
-          </Stack.Navigator>
-          {/* <TrackOrder /> */}
-        </NavigationContainer>
-      </AppContext.Provider>
-    </Provider>
+              <Stack.Screen name="Restaurant" component={Restaurant} />
+              <Stack.Screen name="RestaurantList" component={List} />
+              <Stack.Screen name="ChefSearch" component={ChefSearch} />
+              <Stack.Screen name="Search" component={Search} />
+              <Stack.Screen name="Chef" component={Chef} />
+              <Stack.Screen name="ChefList" component={ChefList} />
+              <Stack.Screen name="Profile" component={Profile} />
+              <Stack.Screen
+                name="DishInformation"
+                component={DishInformation}
+              />
+              {/* <Stack.Screen name="Search" component={Search} /> */}
+              <Stack.Screen name="ChefDetails" component={ChefDetails} />
+              <Stack.Screen name="DineOut" component={DineOut} />
+              <Stack.Screen
+                name="RestaurantDetails"
+                component={RestaurantDetails}
+              />
+              {/* <Stack.Screen name="Chef" component={ChefNavigation} /> */}
+              <Stack.Screen name="BookingStatus" component={BookingStatus} />
+              <Stack.Screen name="Cart" component={Cart} />
+              <Stack.Screen name="Payment" component={Payment} />
+              <Stack.Screen name="OrderPlaced" component={OrderPlaced} />
+              <Stack.Screen name="OrderCancelled" component={OrderCancelled} />
+              <Stack.Screen name="About" component={About} />
+              <Stack.Screen name="Favorites" component={Favorites} />
+              <Stack.Screen name="SavedAddress" component={SavedAddress} />
+              <Stack.Screen name="EditProfile" component={EditProfile} />
+              <Stack.Screen name="AboutUs" component={AboutUs} />
+              <Stack.Screen name="ContactUs" component={ContactUs} />
+              <Stack.Screen name="FAQS" component={FAQS} />
+              <Stack.Screen name="RechargeWallet" component={RechargeWallet} />
+              <Stack.Screen name="DineoutSearch" component={DineoutSearch} />
+              <Stack.Screen name="Maps" component={Maps} />
+              <Stack.Screen
+                name="TermsAndConditions"
+                component={TermsAndConditions}
+              />
+              <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
+              <Stack.Screen
+                name="CancellationPolicy"
+                component={CancellationPolicy}
+              />
+              <Stack.Screen
+                name="RestDishInformation"
+                component={RestDishInformation}
+              />
+              <Stack.Screen name="TrackOrder" component={TrackOrder} />
+            </Stack.Navigator>
+            {/* <TrackOrder /> */}
+          </NavigationContainer>
+        </AppContext.Provider>
+      </Provider>
+    </SafeAreaView>
   );
 };
 

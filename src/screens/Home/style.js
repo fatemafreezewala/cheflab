@@ -88,7 +88,7 @@ export default StyleSheet.create({
     elevation: 10,
     alignItems: 'center',
   },
-  headerImage: {width: 25, height: 25, resizeMode: 'center'},
+  headerImage: {width: 25, height: 25, resizeMode: 'contain'},
   locationText: {
     fontSize: 12,
     fontFamily: 'Segoe UI',

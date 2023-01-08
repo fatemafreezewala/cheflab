@@ -1,7 +1,7 @@
-export const BASE_URL =
-  'https://web10technologies.com/Chelab_full_project/public/api/';
+// export const BASE_URL =
+//   'https://web10technologies.com/Chelab_full_project/public/api/';
 // export const BASE_URL = 'http://3.111.253.190/api/';
-// export const BASE_URL = 'https://cheflab.co.in/api/';
+export const BASE_URL = 'https://cheflab.co.in/api/';
 
 export const API_END_POINTS = {
   // wallet api
