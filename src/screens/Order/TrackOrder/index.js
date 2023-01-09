@@ -27,6 +27,7 @@ import {Animations, COLORS, icons} from '../../../constants';
 import {horizScale, vertScale} from '../../../constants/themes';
 import ToolbarWithIcon from '../../../utils/ToolbarWithIcon';
 import style from './style';
+import database from '@react-native-firebase/database';
 
 import BottomSheet from 'react-native-simple-bottom-sheet';
 
@@ -239,30 +240,30 @@ const TrackOrder = ({navigation, route}) => {
     }
   };
 
-  useEffect(() => {
-    const requestLocationPermission = async () => {
-      if (Platform.OS === 'ios') {
-        getOneTimeLocation();
-        subscribeLocationLocation();
-      } else {
-        try {
-          const granted = await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-            {
-              title: 'Location Access Required',
-              message:
-                'This App needs to Access your location for easy delivery of your products/foods.',
-            },
-          );
-          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-            // getOneTimeLocation();
-            // subscribeLocationLocation();
-          }
-        } catch (err) {
-          console.warn(err);
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'ios') {
+      getOneTimeLocation();
+      subscribeLocationLocation();
+    } else {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Access Required',
+            message:
+              'This App needs to Access your location for easy delivery of your products/foods.',
+          },
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          // getOneTimeLocation();
+          // subscribeLocationLocation();
         }
+      } catch (err) {
+        console.warn(err);
       }
-    };
+    }
+  };
+  useEffect(() => {
     requestLocationPermission();
   }, []);
   const [apiToken, setApiToken] = useState('');
@@ -314,26 +315,26 @@ const TrackOrder = ({navigation, route}) => {
         // );
         let coords = position.coords;
         setLocation(coords);
-        if (coords) {
-          let {longitude, latitude} = coords;
-          animate(position.coords.latitude, position.coords.longitude);
-          setHeading(position?.coords?.heading);
-          setMapRegion({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            latitudeDelta: 0,
-            longitudeDelta: 0,
-          });
+        // if (coords) {
+        //   let {longitude, latitude} = coords;
+        //   animate(position.coords.latitude, position.coords.longitude);
+        //   setHeading(position?.coords?.heading);
+        //   setMapRegion({
+        //     latitude: position.coords.latitude,
+        //     longitude: position.coords.longitude,
+        //     latitudeDelta: 0,
+        //     longitudeDelta: 0,
+        //   });
 
-          setCoordinate(
-            new AnimatedRegion({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              latitudeDelta: LATITUDE_DELTA,
-              longitudeDelta: LONGITUDE_DELTA,
-            }),
-          );
-        }
+        //   setCoordinate(
+        //     new AnimatedRegion({
+        //       latitude: position.coords.latitude,
+        //       longitude: position.coords.longitude,
+        //       latitudeDelta: LATITUDE_DELTA,
+        //       longitudeDelta: LONGITUDE_DELTA,
+        //     }),
+        //   );
+        // }
 
         setLongitude(currentLongitude);
         setLatitude(currentLatitude);
@@ -493,9 +494,50 @@ const TrackOrder = ({navigation, route}) => {
     // console.log(
     //   moment(item?.created_at).format('L') + ' ** ' + orderCreationTime,
     // );
+
+    return () => {
+      stopDriverTrack();
+    };
   }, []);
 
   const [orderData, setOrderData] = useState({});
+
+  const trackDriverPosition = async id => {
+    if (id === undefined || id === null || id === '') {
+      return;
+    }
+    database()
+      .ref(`locations/${id}`)
+      .on('value', snapshot => {
+        console.log('User data: ', snapshot.val());
+        let position = snapshot.val();
+        animate(position.lat, position.long);
+        setHeading(position.heading);
+        setMapRegion({
+          latitude: position.lat,
+          longitude: position.long,
+          latitudeDelta: 0.015,
+          longitudeDelta: 0.015,
+        });
+
+        setCoordinate(
+          new AnimatedRegion({
+            latitude: position.lat,
+            longitude: position.long,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
+          }),
+        );
+      });
+  };
+
+  const stopDriverTrack = () => {
+    database()
+      .ref(`locations/${item.accepted_driver_id}`)
+      .off('value', snapshot => {
+        console.log('User data: ', snapshot.val());
+      });
+  };
 
   const getOrderDetails = async id => {
     let t = '';
@@ -519,6 +561,9 @@ const TrackOrder = ({navigation, route}) => {
         // console.log('responser  -? ' + JSON.stringify(response.data));
         if (response?.data?.status) {
           // setOrderData(response?.data?.response);
+          // console.log('OrderDetails', response?.data?.response);
+          trackDriverPosition(response?.data?.response?.accepted_driver_id);
+
           setitem(response?.data?.response);
           let i = response?.data?.response;
 
@@ -1996,7 +2041,7 @@ const TrackOrder = ({navigation, route}) => {
               minZoomLevel={0} // default => 0
               maxZoomLevel={20} // default => 20
             >
-              <MapViewDirections
+              {/* <MapViewDirections
                 origin={{
                   latitude: item?.lat + 0.0 || userLatitude + 0.0,
                   longitude: item?.long + 0.0 || userLongitude + 0.0,
@@ -2024,7 +2069,7 @@ const TrackOrder = ({navigation, route}) => {
                     },
                   });
                 }}
-              />
+              /> */}
               <Marker.Animated
                 // coordinate={{
                 //   latitude: location?.['latitude'] || 22.95569234,
@@ -2050,10 +2095,10 @@ const TrackOrder = ({navigation, route}) => {
               {/* {/* {item && ( */}
               <Marker
                 coordinate={{
-                  latitude: 22.950097,
-                  longitude: 76.0346,
-                  // latitude: parseFloat(userLatitude),
-                  // longitude: parseFloat(userLongitude),
+                  // latitude: 22.950097,
+                  // longitude: 76.0346,
+                  latitude: parseFloat(userLatitude),
+                  longitude: parseFloat(userLongitude),
                   // latitude: userLatitude,
                   // longitude: userLongitude,
                 }}>
@@ -2072,7 +2117,7 @@ const TrackOrder = ({navigation, route}) => {
               {/* )}  */}
 
               {/* {/* {item && ( */}
-              <Marker
+              {/* <Marker
                 coordinate={{
                   latitude: 22.950097,
                   longitude: 76.0346,
@@ -2092,7 +2137,7 @@ const TrackOrder = ({navigation, route}) => {
                     loop={true}
                   />
                 </View>
-              </Marker>
+              </Marker> */}
               {/* )}  */}
             </MapView>
           )
