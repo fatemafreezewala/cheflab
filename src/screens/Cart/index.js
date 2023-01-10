@@ -81,36 +81,11 @@ const Cart = ({navigation}) => {
     try {
       RazorpayCheckout.open(info)
         .then(async data => {
-          // handle success
-          //get payment https://api.razorpay.com/v1/payments/pay_K9PLXeAyQHBGWh //by payment ID
-          console.log(`Success: ${JSON.stringify(data)}`);
           await createOrder(JSON.stringify(data));
-          //Success: {"razorpay_payment_id":"pay_K9PLXeAyQHBGWh"}
-
-          // removeItemFromCart();
-
-          // setTimeout(() => {
-          //   navigation.replace('OrderPlaced');
-          // }, 1500);
         })
         .catch(error => {
           setCustomLoading(false);
-
-          //   // handle failure
-          console.log(
-            'Error: code -> ' + JSON.stringify(error?.error?.description),
-          );
-          //  ${JSON.stringify(error.code)} |||||||||||||
-          //  desc->  ${JSON.stringify(error.description)}`);
-          //   alert(`Error: code ->
-          //  ${JSON.stringify(error.code)} |||||||||||||
-          //  desc->  ${JSON.stringify(error.description)}`);
           Alert.alert('Payment Failed', error?.error?.description + '', [
-            // {
-            //   text: 'Cancel',
-            //   onPress: () => console.log('Cancel Pressed'),
-            //   style: 'cancel',
-            // },
             {text: 'OK', onPress: () => console.log('OK Pressed')},
           ]);
         });
@@ -363,19 +338,6 @@ const Cart = ({navigation}) => {
     })
       .then(response => {
         if (response?.data?.status) {
-          console.log(
-            'removeItemFromCart =>? aaaaaaaaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ',
-            JSON.stringify(response?.data),
-          );
-
-          // let c = d?.map(item => {
-          //   return {
-          //     ...item,
-          //     expanded: false,
-          //   };
-          // });
-          // setVendorCouponData(c);
-
           setVendorCouponData([
             ...response?.data?.response?.vendor,
             ...response?.data?.response?.admin,

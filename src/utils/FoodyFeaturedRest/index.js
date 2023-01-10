@@ -132,7 +132,7 @@ const FoodyFeaturedRest = ({items, smallText, heading, loading}) => {
         onPress={() => {
           navigation.navigate('RestaurantDetails', {bookTable: false, item});
         }}
-        activeOpacity={0.8}
+        activeOpacity={0.9}
         style={{
           marginTop: 10,
           marginBottom: 15,
@@ -422,77 +422,7 @@ const FoodyFeaturedRest = ({items, smallText, heading, loading}) => {
                 }}></ShimmerPlaceHolder>
             </View>
           </View>
-          {/* <View>
-        <ShimmerPlaceHolder
-          LinearGradient={LinearGradient}
-          activeOpacity={0.8}
-          height={150}
-          width={Dimensions.get('window').width * 0.41}
-          style={{
-            marginStart: 15,
-            marginTop: 10,
-            marginBottom: 5,
-            elevation: 10,
-            shadowRadius: 10,
-            borderRadius: 10,
-          }}></ShimmerPlaceHolder>
-        <ShimmerPlaceHolder
-          LinearGradient={LinearGradient}
-          activeOpacity={0.8}
-          height={15}
-          width={Dimensions.get('window').width * 0.41}
-          style={{
-            marginStart: 15,
-
-            marginBottom: 5,
-            elevation: 10,
-            shadowRadius: 10,
-            borderRadius: 10,
-          }}></ShimmerPlaceHolder>
-        <ShimmerPlaceHolder
-          LinearGradient={LinearGradient}
-          activeOpacity={0.8}
-          height={15}
-          width={Dimensions.get('window').width * 0.41}
-          style={{
-            marginStart: 15,
-
-            marginBottom: 15,
-            elevation: 10,
-            shadowRadius: 10,
-            borderRadius: 10,
-          }}></ShimmerPlaceHolder>
-      </View> */}
-          {/* <ShimmerPlaceHolder
-        LinearGradient={LinearGradient}
-        activeOpacity={0.8}
-        height={240}
-        width={Dimensions.get('window').width * 0.41}
-        style={{
-          marginStart: 15,
-          marginTop: 10,
-          marginBottom: 15,
-
-          elevation: 10,
-          shadowRadius: 10,
-          borderRadius: 10,
-          // flex: 1,
-        }}></ShimmerPlaceHolder>
-      <ShimmerPlaceHolder
-        LinearGradient={LinearGradient}
-        activeOpacity={0.8}
-        height={240}
-        width={Dimensions.get('window').width * 0.41}
-        style={{
-          marginStart: 15,
-          marginTop: 10,
-          marginBottom: 15,
-
-          elevation: 10,
-          shadowRadius: 10,
-          borderRadius: 10,
-          // flex: 1,
-        }}></ShimmerPlaceHolder> */}
+         
         </View>
       ) : (
         <>

@@ -21,8 +21,6 @@ import {Rating, AirbnbRating} from 'react-native-elements';
 
 import LinearGradient from 'react-native-linear-gradient';
 import {createShimmerPlaceholder} from 'react-native-shimmer-placeholder';
-import {SwiperFlatList} from 'react-native-swiper-flatlist';
-import AntDesign from 'react-native-vector-icons/AntDesign';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {useDispatch, useSelector} from 'react-redux';
 import {COLORS, icons, images, SIZES} from '../../constants/index';
@@ -38,6 +36,9 @@ import WhatsMind, {
 } from '../../utils/WhatsMind';
 import ListCardView from './List/utils/ListCardView';
 import style from './style';
+import {FlatListSlider} from 'react-native-flatlist-slider';
+import CustomHomeSlider from '../../components/CustomHomeSlider'
+
 const ShimmerPlaceHolder = createShimmerPlaceholder(LinearGradient);
 
 const Restaurant = ({navigation}) => {
@@ -101,18 +102,7 @@ const Restaurant = ({navigation}) => {
           }
 
           setRestHomePageData(response[1]?.data?.response);
-          // console.log('\n');
-          // console.log('\n');
-          // console.log('\n');
-          // console.log('\n');
-          // console.log('\n');
-          // console.log('BLOG DATA SET NEW CHANGE -> ');
-          // console.log(response[1]?.data?.response?.blogs);
-          // console.log('\n');
-          // console.log('\n');
-          // console.log('\n');
-          // console.log('\n');
-          // console.log('\n');
+         
           setRestHomePageDataFoody(response[1]?.data?.response?.products);
           setRestMainHomePageDataFoody(response[1]?.data?.response?.products);
         } else {
@@ -155,14 +145,10 @@ const Restaurant = ({navigation}) => {
           if (value !== '' && value !== null) {
             setUserId(value);
             getUserCartCount(t, value);
-
             fetchConcurrentData(t, value)
               .then(response => {
                 if (response[0]?.data?.status == false) {
                   dispatch(updateCartCount(0));
-                  // console.log(
-                  //   JSON.stringify(response[1].data?.response?.blogs),
-                  // );
                   if (restHomeBlogData?.length == 0) {
                     setRestHomeBlogData(response[1]?.data?.response?.blogs);
                   }
@@ -234,7 +220,6 @@ const Restaurant = ({navigation}) => {
         if (response?.data?.status) {
           setAllRestaurantMainData(response?.data?.response);
           let a = [...restaurantAllData, ...response?.data?.response];
-          // console.log('getAllVendorRatingReview -> >>> ' + JSON.stringify(a));
           setAllRestaurantData(a);
           if (response?.data?.response?.length > 0) {
             setNoMoreData(false);
@@ -261,14 +246,7 @@ const Restaurant = ({navigation}) => {
       getInfoFromStorage();
     });
     return () => interactionPromise.cancel();
-  }, [navigation, isFocused]);
-
-  // useEffect(() => {
-  //   const interactionPromise = InteractionManager.runAfterInteractions(() => {
-  //     getInfoFromStorage();
-  //   });
-  //   return () => interactionPromise.cancel();
-  // }, [isFocused]);
+  }, [navigation, isFocused])
 
   const [notAvailLocation, setNotAvailLocation] = useState(false);
 
@@ -281,17 +259,10 @@ const Restaurant = ({navigation}) => {
       Authorization: `Bearer ${value}`,
     })
       .then(response => {
-        console.log('\n\n');
-        console.log('\n\n');
-
-        console.log('\n\n');
-        console.log('\n\n');
+  
 
         if (response?.data?.status) {
-          // console.log(
-          //   'SUCCESS getAllCuisines ->>>>>>>',
-          //   response?.data?.status,
-          // );
+
 
           setCuisinesData(response?.data?.response);
           setNotAvailLocation(response?.data?.response == 0);
@@ -301,7 +272,6 @@ const Restaurant = ({navigation}) => {
         }
       })
       .catch(error => {
-        console.log('ERROR IN getCuisines API -> ', error);
       })
       .finally(() => {
         setLoading(false);
@@ -309,7 +279,7 @@ const Restaurant = ({navigation}) => {
   };
 
   const [banner, setBanner] = useState([]);
-  // console.log('usela set ' + userLatitude + ' ' + userLongitude);
+ 
 
   const getHomeBanner = t => {
     let body = {
@@ -319,13 +289,7 @@ const Restaurant = ({navigation}) => {
       Authorization: `Bearer ${t}`,
     })
       .then(response => {
-        console.log('\n\n');
-        console.log('\n\n BANNER API RESPONSE: ');
-        console.log(JSON.stringify(response.data));
-        console.log('\n\n BANNER API RESPONSE: ');
-        console.log('\n\n');
-        console.log('\n\n');
-
+      
         if (response?.data?.status) {
           setBanner(response?.data?.response);
         } else {
@@ -333,7 +297,6 @@ const Restaurant = ({navigation}) => {
         }
       })
       .catch(error => {
-        console.log('ERROR IN getCuisines API -> ', error);
       })
       .finally(() => {});
   };
@@ -359,7 +322,6 @@ const Restaurant = ({navigation}) => {
         }
       })
       .catch(error => {
-        console.log('ERROR IN getCuisines API -> ', error);
       })
       .finally(() => {
         setLoading(false);
@@ -382,7 +344,6 @@ const Restaurant = ({navigation}) => {
 
   const [restHomeBlogData, setRestHomeBlogData] = useState([]);
 
-  // console.log(restHomeBlogData?.length + ' length of array rest blog');
 
   const [restHomePageData, setRestHomePageData] = useState([]);
 
@@ -414,7 +375,7 @@ const Restaurant = ({navigation}) => {
       let temp = Object.assign(item, {});
       if (productId == temp?.product_id) {
         const itemss = pData?.options?.find(x => x.id === selectedOption?.id);
-        // console.log('item -> ', JSON.stringify(itemss));
+       
         temp.cart_qty = parseInt(itemss?.variant_qty) || 1;
         addToCart(temp);
         getUserCartCount(apiToken, userId);
@@ -431,36 +392,14 @@ const Restaurant = ({navigation}) => {
     let a = variantData?.map(item => {
       let temp = Object.assign({}, item);
       if (parseInt(item?.id) === parseInt(id)) {
-        // if (parseInt(temp.cart_variant_qty) == 0) {
-        //   temp.cart_variant_qty = parseInt(temp.cart_variant_qty) + 2;
-        //   t = parseInt(totalProductPrice) + parseInt(temp?.variant_price);
-        // } else {
         temp.qty = parseInt(temp.qty) + 1;
         temp.added = true;
         t = parseInt(totalProductPrice) + parseInt(temp?.variant_price);
-        // }
       }
       return temp;
     });
     setTotalProductPrice(t);
     setVariantData(a);
-
-    // restHomePageDataFoody[newCartIndex] = {
-    //   ...pData,
-    //   options: a,
-    // };
-
-    // console.log(
-    //   'new index cart -> ',
-    //   newCartIndex +
-    //     ' ' +
-    //     JSON.stringify({
-    //       ...pData,
-    //       options: a,
-    //     }),
-    // );
-
-    // setRestHomePageDataFoody(restHomePageDataFoody);
   };
 
   const onAddModalMinus = (id, arr, data, idx) => {
@@ -482,10 +421,6 @@ const Restaurant = ({navigation}) => {
 
     setTotalProductPrice(t);
     setVariantData(a);
-    // setPData({
-    //   ...pData,
-    //   options: a,
-    // });
   };
 
   const [cartVendorId, setCartVendorId] = useState('');
@@ -549,11 +484,11 @@ const Restaurant = ({navigation}) => {
       .then(response => {
         if (response?.data?.status) {
           if (restHomeBlogData?.length == 0) {
-            setRestHomeBlogData(response[1]?.data?.response?.blogs);
+          setRestHomeBlogData([...response[1]?.data?.response?.blogs]);
           }
-          setRestHomePageData(response?.data?.response);
+          setRestHomePageData([...response?.data?.response]);
 
-          setRestHomePageDataFoody(response?.data?.response?.products);
+          setRestHomePageDataFoody([...response?.data?.response?.products]);
         } else {
           setRestHomePageDataFoody([]);
         }
@@ -565,36 +500,6 @@ const Restaurant = ({navigation}) => {
         setLoading(false);
       });
   };
-
-  const getRestHomePageBlog = value => {
-    let body = {
-      lat: userLatitude,
-      lng: userLongitude,
-      vendor_offset: 0,
-      vendor_limit: 10,
-      product_offset: 0,
-      product_limit: 10,
-    };
-    ApiCall('post', body, API_END_POINTS.getRestaurantHomePage, {
-      Authorization: `Bearer ${value}`,
-    })
-      .then(response => {
-        if (response?.data?.status) {
-          if (restHomeBlogData?.length == 0) {
-            setRestHomeBlogData(response[1]?.data?.response?.blogs);
-          }
-        } else {
-          setRestHomeBlogData([]);
-        }
-      })
-      .catch(error => {
-        console.log('ERROR IN getCuisines API -> ', error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
-
   const [userId, setUserId] = useState('');
   const [addonPrice, setAddonPrice] = useState(0);
 
@@ -605,10 +510,6 @@ const Restaurant = ({navigation}) => {
       var temp = Object.assign({}, item);
       if (temp.addon === id) {
         temp.added = !temp.added;
-        // if (parseInt(temp.cart_addon_qty) == 0) {
-        //   temp.cart_addon_qty = 1;
-        //   b = parseInt(temp.price) + parseInt(totalAddonPrice);
-        // } else {
         if (temp?.added) {
           temp.qty = 1;
           b = parseInt(temp.price) + parseInt(totalAddonPrice);
@@ -619,10 +520,7 @@ const Restaurant = ({navigation}) => {
       }
       setTotalAddonPrice(b);
       return temp;
-    });
-
-    // setPData({...pData, addons: a});
-    setAddonData(a);
+    });    setAddonData(a);
 
     restHomePageDataFoody[newCartIndex] = {
       ...pData,
@@ -635,9 +533,7 @@ const Restaurant = ({navigation}) => {
   const userLatitude = useSelector(state => state?.state?.userLatitude);
   const userLongitude = useSelector(state => state?.state?.userLongitude);
 
-  // console.log(
-  //   `User Latitude: ${userLatitude} and user Longitude: ${userLongitude} and apitkey: ${apiToken}`,
-  // );
+
 
   const [cartArrayCount, setCartArrayCount] = useState('');
 
@@ -831,7 +727,6 @@ const Restaurant = ({navigation}) => {
   };
 
   const addToCart = async i => {
-    console.log('add to cart rec item-> ', JSON.stringify(i));
 
     let body = {
       user_id: userId,
@@ -843,36 +738,6 @@ const Restaurant = ({navigation}) => {
         },
       ],
     };
-
-    // if (i.options) {
-    // const itemss = i.options?.reduce(function (acc, cur) {
-    //   if (selectedOption?.id == cur.id) {
-    //     if (parseInt(cur.cart_variant_qty) == 0) {
-    //       var o = {
-    //         variant_id: cur?.id + '',
-    //         variant_qty: '1',
-    //       };
-    //       body.products[0].product_qty = '1';
-    //     } else {
-    //       var o = {
-    //         variant_id: cur?.id + '',
-    //         variant_qty: cur.cart_variant_qty + '',
-    //       };
-    //       body.products[0].product_qty = cur.cart_variant_qty + '' || '1';
-    //     }
-    //     acc.push(o);
-    //   }
-    //   return acc;
-    // }, []);
-    //   if (itemss) {
-    //     let temp = Object.assign({}, body.products[0]);
-    //     temp.variants = itemss || [];
-    //     console.log(
-    //       'temp.variants itemmmmmmmmmmmmmmmmmmm=> ' + JSON.stringify(temp),
-    //     );
-    //     body.products[0] = temp;
-    //   }
-    // }
 
     if (variantData && variantData?.length > 0) {
       var o;
@@ -915,9 +780,7 @@ const Restaurant = ({navigation}) => {
       if (a) {
         let temp = Object.assign({}, body.products[0]);
         temp.variants = a || [];
-        console.log(
-          'temp.variants itemmmmmmmmmmmmmmmmmmm=> ' + JSON.stringify(temp),
-        );
+       
         body.products[0] = temp;
       }
     }
@@ -925,10 +788,7 @@ const Restaurant = ({navigation}) => {
     if (addonData && addonData?.length > 0) {
       var o;
       let ads = addonData?.reduce(function (acc, cur) {
-        console.log(
-          'addonData ->>> ',
-          cur.added + ' ---- ' + cur.id + ' ---- ' + cur.qty,
-        );
+       
         if (cur.added) {
           o = {addon_id: cur?.id + '', addon_qty: '1'};
           acc.push(o);
@@ -945,19 +805,12 @@ const Restaurant = ({navigation}) => {
       }
     }
 
-    console.log(
-      'add to cart rece item temp inb lasrt body else statement  --> ',
-      JSON.stringify(body),
-    );
 
     ApiCall('post', body, API_END_POINTS.productAddToCart, {
       Authorization: `Bearer ${apiToken}`,
     })
       .then(response => {
-        console.log(
-          'add to caret api response p --> ',
-          JSON.stringify(response?.data),
-        );
+
         if (response?.data?.status) {
           // ShowMessage(response?.data?.message);
           setCartId(response?.data?.response?.cart_id);
@@ -1097,18 +950,13 @@ const Restaurant = ({navigation}) => {
             flexGrow: 1,
             justifyContent: 'flex-end',
           }}>
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => closeAddModal()}
-            style={{
-              flex: 1,
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              // backgroundColor: COLORS.cartCountBgColor,
-            }}>
-            <TouchableOpacity
+              <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => closeAddModal()}>
+              onPress={() => {
+                closeAddModal()
+              }}
+              style={{alignSelf:'center'}}
+              >
               <Image
                 source={icons.cancel}
                 style={{
@@ -1118,7 +966,6 @@ const Restaurant = ({navigation}) => {
                 }}
               />
             </TouchableOpacity>
-          </TouchableOpacity>
           <View style={style.additemView}>
             <ScrollView
               style={[
@@ -1127,12 +974,7 @@ const Restaurant = ({navigation}) => {
                   paddingTop: 10,
                 },
               ]}>
-              <View
-                style={
-                  {
-                    // paddingBottom: 10,
-                  }
-                }></View>
+          
               <View
                 style={{
                   elevation: 10,
@@ -1229,15 +1071,11 @@ const Restaurant = ({navigation}) => {
                       alignItems: 'center',
                       flexDirection: 'row',
                       marginTop: 15,
-                      // marginBottom: 5,
+                    
                       marginStart: 20,
-                      // backgroundColor: COLORS.primary,
+                      
                     }}>
-                    {/* <AntDesign name="staro" color={'gold'} />
-                    <AntDesign name="staro" color={'gold'} />
-                    <AntDesign name="staro" color={'gold'} />
-                    <AntDesign name="staro" color={'gold'} />
-                    <AntDesign name="staro" color={'gold'} /> */}
+                   
                     <AirbnbRating
                       count={5}
                       isDisabled={true}
@@ -1253,7 +1091,7 @@ const Restaurant = ({navigation}) => {
                             fontFamily: 'Segoe UI Bold',
                             fontSize: 12,
                             color: COLORS.black,
-                            // marginTop: 0,
+                            
                             alignSelf: 'center',
                             marginVertical: 2,
                           }}>
@@ -1261,41 +1099,21 @@ const Restaurant = ({navigation}) => {
                         </Text>
                         <Text
                           style={{
-                            // marginHorizontal: 10,
+                           
                             fontFamily: 'Segoe UI',
                             fontSize: 10,
                             color: '#0638ff',
-                            // marginTop: 0,
+                       
                             alignSelf: 'center',
                             marginVertical: 2,
                           }}>
-                          {/* ({item?.reviewCount})12 Reviews */}(
+                        (
                           {pData.product_rating}) Reviews
                         </Text>
                       </>
                     ) : null}
                   </View>
-                  {/* <Text
-                    style={{
-                      color: COLORS.grey,
-                      fontSize: 1,
-                      fontFamily: 'Segoe UI',
-                      // marginTop: 5,
-                      marginStart: 20,
-                    }}>
-                   South Indian 
-                  </Text> */}
-                  {/* <Text
-                    style={{
-                      color: COLORS.darkGray,
-                      fontSize: 16,
-                      fontFamily: 'Segoe UI',
-                      marginTop: 5,
-                      marginStart: 20,
-                      paddingBottom: 10,
-                    }}>
-                    ₹ {pData?.product_price}
-                  </Text> */}
+                 
                 </View>
                 <TouchableOpacity
                   onPress={() => {
@@ -1352,71 +1170,7 @@ const Restaurant = ({navigation}) => {
                     />
                   </>
                 ) : (
-                  // <View
-                  //   style={{
-                  //     marginTop: 15,
-                  //   }}>
-                  //   <ShimmerPlaceHolder
-                  //     LinearGradient={LinearGradient}
-                  //     height={15}
-                  //     width={Dimensions.get('window').width * 0.5}
-                  //     style={{
-                  //       borderRadius: 5,
-                  //       marginStart: 15,
-                  //     }}
-                  //   />
-                  //   <ShimmerPlaceHolder
-                  //     LinearGradient={LinearGradient}
-                  //     height={15}
-                  //     width={Dimensions.get('window').width * 0.93}
-                  //     style={{
-                  //       borderRadius: 5,
-                  //       marginStart: 15,
-                  //       marginTop: 5,
-                  //     }}
-                  //   />
-                  //   <ShimmerPlaceHolder
-                  //     LinearGradient={LinearGradient}
-                  //     height={15}
-                  //     width={Dimensions.get('window').width * 0.93}
-                  //     style={{
-                  //       marginTop: 5,
-                  //       borderRadius: 5,
-                  //       marginStart: 15,
-                  //     }}
-                  //   />
-
-                  //   <ShimmerPlaceHolder
-                  //     LinearGradient={LinearGradient}
-                  //     height={15}
-                  //     width={Dimensions.get('window').width * 0.5}
-                  //     style={{
-                  //       marginTop: 10,
-                  //       borderRadius: 5,
-                  //       marginStart: 15,
-                  //     }}
-                  //   />
-                  //   <ShimmerPlaceHolder
-                  //     LinearGradient={LinearGradient}
-                  //     height={15}
-                  //     width={Dimensions.get('window').width * 0.93}
-                  //     style={{
-                  //       borderRadius: 5,
-                  //       marginStart: 15,
-                  //       marginTop: 5,
-                  //     }}
-                  //   />
-                  //   <ShimmerPlaceHolder
-                  //     LinearGradient={LinearGradient}
-                  //     height={15}
-                  //     width={Dimensions.get('window').width * 0.93}
-                  //     style={{
-                  //       marginTop: 5,
-                  //       borderRadius: 5,
-                  //       marginStart: 15,
-                  //     }}
-                  //   />
-                  // </View>
+                  
                   <View
                     style={{
                       marginTop: 15,
@@ -1508,8 +1262,7 @@ const Restaurant = ({navigation}) => {
                     setAddonData([]);
                     setVariantData([]);
                     setSelectedOption(null);
-                    // setTotalAddonPrice(0);
-                    // setTotalProductPrice(0);
+                   
                   } else if (cartArrayCount == '') {
                     newPlus(pData?.product_id + '');
                     setPData({});
@@ -1518,8 +1271,7 @@ const Restaurant = ({navigation}) => {
                     setVariantData([]);
                     setSelectedOption(null);
 
-                    // setTotalAddonPrice(0);
-                    // setTotalProductPrice(0);
+                    
                   } else {
                     setItemExistData(pData);
                     setPData({});
@@ -1529,8 +1281,6 @@ const Restaurant = ({navigation}) => {
                     setVariantData([]);
                     setSelectedOption(null);
 
-                    // setTotalAddonPrice(0);
-                    // setTotalProductPrice(0);
                   }
                 }}
                 activeOpacity={0.8}
@@ -1545,7 +1295,7 @@ const Restaurant = ({navigation}) => {
                   alignItems: 'center',
                   borderRadius: 10,
                 }}>
-                {totalProductPrice + totalAddonPrice == 0 ? (
+                {/* {totalProductPrice + totalAddonPrice == 0 ? (
                   <ActivityIndicator size={'small'} color={COLORS.white} />
                 ) : (
                   <Text
@@ -1556,7 +1306,15 @@ const Restaurant = ({navigation}) => {
                     }}>
                     Add Item ₹ {totalProductPrice + totalAddonPrice}
                   </Text>
-                )}
+                )} */}
+                <Text
+                    style={{
+                      color: COLORS.white,
+                      fontSize: 18,
+                      fontFamily: 'Segoe UI Bold',
+                    }}>
+                    Add Item ₹ {totalProductPrice + totalAddonPrice}
+                  </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1617,11 +1375,7 @@ const Restaurant = ({navigation}) => {
   };
 
   const updateListFavUnFav = idx => {
-    // if (item?.is_like) {
-    //   ApiCall('post', body, API_END_POINTS.restaurantRemoveFavorite, {});
-    // } else {
-    //   ApiCall('post', body, API_END_POINTS.restaurantAddFavorite, {});
-    // }
+
     let a = restaurantAllData.map((item, index) => {
       let temp = Object.assign({}, item);
       if (temp?.id == idx) {
@@ -1664,13 +1418,9 @@ const Restaurant = ({navigation}) => {
       }
       return temp;
     });
-    // console.log('aaaaaaaaaaaaaaaaaaaaaaaa -> ', JSON.stringify(a));
-    // items = a;
-    // console.log('aaaaaaaaaaaaaaaaaaaaaaaa -> ', JSON.stringify(items));
     setAllRestaurantData(a);
   };
   const renderFeaturedDishOne = ({item, index}) => {
-    // console.log('itemm 0< 111111111111111 ', JSON.stringify(item));
     let chilli = [];
 
     for (let i = 0; i < parseInt(item?.products[0]?.chili_level); i++) {
@@ -1691,50 +1441,20 @@ const Restaurant = ({navigation}) => {
       <TouchableOpacity
         onPress={() => {
           if (item?.products[0]?.customizable == 'true') {
+            setTotalProductPrice(item?.products[0]?.product_price)
             setShowAdd(true);
-            // closeAddModal();
-            // setShowAdd(true);
-            // console.log('pdata -> ', JSON.stringify(item));
             setNewCartIndex(index);
             setPData(item?.products[0]);
             callVariantAddonApi(item?.products[0]?.product_id);
           } else {
+            setTotalProductPrice(item?.products[0]?.product_price)
             setShowAdd(true);
-            // closeAddModal();
-
-            // setShowAdd(true);
-
-            // console.log('pdata -> ', JSON.stringify(item));
             setNewCartIndex(index);
             setPData(item?.products[0]);
           }
-          // let optionAvail = false;
-          // if (item?.options && item?.options?.length > 0) {
-          //   item?.options?.forEach(it => {
-          //     if (parseInt(it?.cart_variant_qty) > 0) {
-          //       onSelect(it);
-          //       optionAvail = true;
-          //       return;
-          //     } else {
-          //       if (!optionAvail) {
-          //         optionAvail = false;
-          //         onSelect(item?.options[0]);
-          //       }
-          //     }
-          //   });
-          // }
-          // let ap = 0;
-          // if (item?.addons && item?.addons?.length > 0) {
-          //   item?.addons?.forEach(it => {
-          //     if (parseInt(it?.cart_addon_qty) > 0) {
-          //       ap = ap + parseInt(it?.price);
-          //     }
-          //   });
-          // }
-          // setTotalAddonPrice(ap);
+      
         }}
         activeOpacity={0.8}
-        // delayPressIn={0}
         style={{
           width: 190,
           marginTop: 10,
@@ -1743,9 +1463,7 @@ const Restaurant = ({navigation}) => {
           borderRadius: 10,
           marginBottom: 15,
           marginStart: index == 0 ? SIZES.padding + 5 : 10,
-          marginEnd: 2,
-          // marginEnd:
-          //   index == restHomeBlogData?.length - 1 ? SIZES.padding + 2 : 0,
+          marginEnd: 2
         }}>
         <Image
           source={{uri: item?.products[0]?.image}}
@@ -1759,8 +1477,6 @@ const Restaurant = ({navigation}) => {
         />
         <TouchableOpacity
           onPress={() => {
-            // updateFavUnFav(index);
-            console.log('updateFavUnFav');
             updateFavUnFav(item?.products[0]?.product_id);
           }}
           style={{
@@ -1790,8 +1506,7 @@ const Restaurant = ({navigation}) => {
             color: COLORS.black,
             marginTop: 8,
             alignSelf: 'center',
-            height: 40,
-            // backgroundColor: COLORS.red,
+            height: 40
           }}
           numberOfLines={2}>
           {item?.products[0]?.product_name}
@@ -1805,8 +1520,7 @@ const Restaurant = ({navigation}) => {
             color: COLORS.grey,
             marginVertical: 5,
             textAlign: 'center',
-            height: 35,
-            // backgroundColor: '#ff45',
+            height: 35
           }}
           numberOfLines={2}
           ellipsizeMode="tail">
@@ -1819,8 +1533,7 @@ const Restaurant = ({navigation}) => {
             fontSize: 14,
             color: COLORS.grey,
             marginVertical: 2,
-            alignSelf: 'center',
-            // height: 40,
+            alignSelf: 'center'
           }}
           numberOfLines={2}>
           {item?.products[0]?.restaurantName}
@@ -1832,12 +1545,6 @@ const Restaurant = ({navigation}) => {
             alignItems: 'center',
             flexDirection: 'row',
           }}>
-          {/* <Image source={icons.star} style={styles.star_logo} /> */}
-          {/* <AntDesign name="staro" color={'gold'} />
-          <AntDesign name="staro" color={'gold'} />
-          <AntDesign name="staro" color={'gold'} />
-          <AntDesign name="staro" color={'gold'} />
-          <AntDesign name="staro" color={'gold'} /> */}
           <AirbnbRating
             count={5}
             isDisabled={true}
@@ -1879,7 +1586,6 @@ const Restaurant = ({navigation}) => {
           style={{
             flexDirection: 'row',
             paddingBottom: 10,
-            // backgroundColor: 'red',
             marginTop: 10,
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -1934,28 +1640,7 @@ const Restaurant = ({navigation}) => {
                   onPress={() => {
                     newMinusOut(item?.products[0]?.product_id);
                   }}>
-                  {/* <View
-                    style={[
-                      {
-                        paddingTop: 3,
-                        paddingBottom: 3,
-                        paddingEnd: 3,
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: COLORS.primary,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginStart: -1,
-                      },
-                    ]}> */}
-                  {/* <Image
-                    source={icons.minus}
-                    style={{
-                      width: 20,
-                      height: 20,
-                      marginStart: 3,
-                    }}
-                  /> */}
+                 
                   <FontAwesome
                     name="minus"
                     color={COLORS.primary}
@@ -1965,7 +1650,6 @@ const Restaurant = ({navigation}) => {
                     }}
                   />
 
-                  {/* </View> */}
                 </TouchableOpacity>
                 <Text
                   style={{
@@ -1978,35 +1662,12 @@ const Restaurant = ({navigation}) => {
                 </Text>
                 <TouchableOpacity
                   style={{
-                    // paddingStart: 2,
-                    flexDirection: 'row',
-                    // paddingEnd: 3,
+                    flexDirection: 'row'
                   }}
                   onPress={() => {
                     newPlusOut(item?.products[0]?.product_id);
                   }}>
-                  {/* <View
-                    style={[
-                      {
-                        paddingTop: 3,
-                        paddingBottom: 3,
-                        paddingStart: 3,
-                        borderRadius: 20,
-                        borderWidth: 1,
-                        borderColor: COLORS.primary,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginEnd: -1,
-                      },
-                    ]}> */}
-                  {/* <Image
-                    source={icons.plus}
-                    style={{
-                      width: 20,
-                      height: 20,
-                      marginEnd: 3,
-                    }}
-                  /> */}
+                  
                   <FontAwesome
                     name="plus"
                     color={COLORS.primary}
@@ -2015,7 +1676,6 @@ const Restaurant = ({navigation}) => {
                       marginEnd: 5,
                     }}
                   />
-                  {/* </View> */}
                 </TouchableOpacity>
               </View>
             ) : (
@@ -2033,56 +1693,14 @@ const Restaurant = ({navigation}) => {
                 onPress={() => {
                   if (item?.customizable == 'true') {
                     setShowAdd(true);
-                    // closeAddModal();
-                    // setShowAdd(true);
-                    // console.log('pdata -> ', JSON.stringify(item));
                     setNewCartIndex(index);
                     setPData(item?.products[0]);
                     callVariantAddonApi(item?.products[0]?.product_id);
                   } else {
                     setShowAdd(true);
-                    // closeAddModal();
-
-                    // setShowAdd(true);
-
-                    // console.log('pdata -> ', JSON.stringify(item));
                     setNewCartIndex(index);
                     setPData(item?.products[0]);
                   }
-                  /******** kal  */
-                  // if (item?.customizable == 'true') {
-                  //   closeAddModal();
-                  //   setNewCartIndex(index);
-                  //   setPData(item);
-                  //   callVariantAddonApi(item?.product_id);
-                  // } else {
-                  //   closeAddModal();
-                  //   setNewCartIndex(index);
-                  //   setPData(item);
-                  // }
-                  /******* purana */
-                  // closeAddModal();
-                  // setNewCartIndex(index);
-                  // console.log('pdata -> ', JSON.stringify(item));
-                  // setPData(item);
-                  // if (item?.options && item?.options?.length > 0) {
-                  //   item?.options?.forEach(it => {
-                  //     if (parseInt(it?.cart_variant_qty) > 0) {
-                  //       onSelect(it);
-                  //     } else {
-                  //       onSelect(item?.options[0]);
-                  //     }
-                  //   });
-                  // }
-                  // let ap = 0;
-                  // if (item?.addons && item?.addons?.length > 0) {
-                  //   item?.addons?.forEach(it => {
-                  //     if (parseInt(it?.cart_addon_qty) > 0) {
-                  //       ap = ap + parseInt(it?.price);
-                  //     }
-                  //   });
-                  // }
-                  // setTotalAddonPrice(ap);
                 }}>
                 <Text
                   style={{
@@ -2134,49 +1752,16 @@ const Restaurant = ({navigation}) => {
         onPress={() => {
           if (item?.customizable == 'true') {
             setShowAdd(true);
-            // closeAddModal();
-            // setShowAdd(true);
-            // console.log('pdata -> ', JSON.stringify(item));
             setNewCartIndex(index);
             setPData(item);
             callVariantAddonApi(item?.product_id);
           } else {
             setShowAdd(true);
-            // closeAddModal();
-
-            // setShowAdd(true);
-
-            // console.log('pdata -> ', JSON.stringify(item));
             setNewCartIndex(index);
             setPData(item);
           }
-          // let optionAvail = false;
-          // if (item?.options && item?.options?.length > 0) {
-          //   item?.options?.forEach(it => {
-          //     if (parseInt(it?.cart_variant_qty) > 0) {
-          //       onSelect(it);
-          //       optionAvail = true;
-          //       return;
-          //     } else {
-          //       if (!optionAvail) {
-          //         optionAvail = false;
-          //         onSelect(item?.options[0]);
-          //       }
-          //     }
-          //   });
-          // }
-          // let ap = 0;
-          // if (item?.addons && item?.addons?.length > 0) {
-          //   item?.addons?.forEach(it => {
-          //     if (parseInt(it?.cart_addon_qty) > 0) {
-          //       ap = ap + parseInt(it?.price);
-          //     }
-          //   });
-          // }
-          // setTotalAddonPrice(ap);
         }}
         activeOpacity={0.8}
-        // delayPressIn={0}
         style={{
           width: 190,
           marginTop: 10,
@@ -2185,9 +1770,7 @@ const Restaurant = ({navigation}) => {
           borderRadius: 10,
           marginBottom: 15,
           marginStart: index == 0 ? SIZES.padding + 5 : 10,
-          marginEnd: 2,
-          // marginEnd:
-          //   index == restHomeBlogData?.length - 1 ? SIZES.padding + 2 : 0,
+          marginEnd: 2
         }}>
         <Image
           source={{uri: item.image}}
@@ -2201,8 +1784,6 @@ const Restaurant = ({navigation}) => {
         />
         <TouchableOpacity
           onPress={() => {
-            // updateFavUnFav(index);
-            console.log('updateFavUnFav');
             updateFavUnFav(item?.product_id);
           }}
           style={{
@@ -2471,56 +2052,17 @@ const Restaurant = ({navigation}) => {
                 onPress={() => {
                   if (item?.customizable == 'true') {
                     setShowAdd(true);
-                    // closeAddModal();
-                    // setShowAdd(true);
-                    // console.log('pdata -> ', JSON.stringify(item));
+                
                     setNewCartIndex(index);
                     setPData(item);
                     callVariantAddonApi(item?.product_id);
                   } else {
                     setShowAdd(true);
-                    // closeAddModal();
-
-                    // setShowAdd(true);
-
-                    // console.log('pdata -> ', JSON.stringify(item));
+                    
                     setNewCartIndex(index);
                     setPData(item);
                   }
-                  /******** kal  */
-                  // if (item?.customizable == 'true') {
-                  //   closeAddModal();
-                  //   setNewCartIndex(index);
-                  //   setPData(item);
-                  //   callVariantAddonApi(item?.product_id);
-                  // } else {
-                  //   closeAddModal();
-                  //   setNewCartIndex(index);
-                  //   setPData(item);
-                  // }
-                  /******* purana */
-                  // closeAddModal();
-                  // setNewCartIndex(index);
-                  // console.log('pdata -> ', JSON.stringify(item));
-                  // setPData(item);
-                  // if (item?.options && item?.options?.length > 0) {
-                  //   item?.options?.forEach(it => {
-                  //     if (parseInt(it?.cart_variant_qty) > 0) {
-                  //       onSelect(it);
-                  //     } else {
-                  //       onSelect(item?.options[0]);
-                  //     }
-                  //   });
-                  // }
-                  // let ap = 0;
-                  // if (item?.addons && item?.addons?.length > 0) {
-                  //   item?.addons?.forEach(it => {
-                  //     if (parseInt(it?.cart_addon_qty) > 0) {
-                  //       ap = ap + parseInt(it?.price);
-                  //     }
-                  //   });
-                  // }
-                  // setTotalAddonPrice(ap);
+                 
                 }}>
                 <Text
                   style={{
@@ -2665,23 +2207,7 @@ const Restaurant = ({navigation}) => {
       Authorization: `Bearer ${apiToken}`,
     })
       .then(response => {
-        console.log(
-          'call varaitn  adon apo  -------------------------',
-          response?.data?.response,
-        );
         if (response?.data?.status) {
-          console.log(JSON.stringify(response?.data?.response));
-          console.log('\n');
-          console.log('\n');
-          console.log('\n');
-          console.log('\n');
-          console.log('\n');
-
-          console.log('\n');
-          console.log('\n');
-          console.log('\n');
-          console.log('\n');
-          console.log('\n');
           setAddonData(response.data?.response?.addons);
           setVariantData(response.data?.response?.options);
           let optionAvail = false;
@@ -2734,7 +2260,6 @@ const Restaurant = ({navigation}) => {
   const onRefresh = () => {
     setRefreshing(true);
     setRestHomeBlogData([]);
-    setRestHomePageData([]);
     setRestHomePageDataFoody([]);
     setBlogPromotionData([]);
     setCuisinesData([]);
@@ -2746,7 +2271,7 @@ const Restaurant = ({navigation}) => {
     getCuisines(apiToken);
     getCategories(apiToken);
     getRestHomePage(apiToken);
-    getRestHomePageBlog(apiToken);
+    // getRestHomePageBlog(apiToken);
   };
 
   const [blogPromotionData, setBlogPromotionData] = useState([]);
@@ -2758,10 +2283,6 @@ const Restaurant = ({navigation}) => {
       lng: userLongitude,
       vendor_type: 1,
     };
-    console.log(
-      'daa userLatitude1 userLatitude1 -> ',
-      userLatitude + ' ' + userLongitude,
-    );
     ApiCall('post', body, API_END_POINTS.getBlogPromotion, {
       Authorization: `Bearer ${apiToken}`,
     })
@@ -2778,9 +2299,7 @@ const Restaurant = ({navigation}) => {
         console.log('ERROR IN getCuisines API -> ', error);
       })
       .finally(() => {
-        // setTimeout(() => {
-        // setLoadNextData(false);
-        // }, 1500);
+        
       });
   };
 
@@ -2809,13 +2328,6 @@ const Restaurant = ({navigation}) => {
       onScroll={async ({nativeEvent}) => {
         if (isCloseToBottom(nativeEvent)) {
           getBlogPromotion();
-          // console.log('\n\n');
-          // console.log('\n\n');
-          // console.log('\n\n');
-          // console.log('Called on scroll');
-          // console.log('\n\n');
-          // console.log('\n\n');
-          // console.log('\n\n');
           if (callOnce == false) {
             await getAllVendorRatingReview(apiToken);
           }
@@ -2824,54 +2336,7 @@ const Restaurant = ({navigation}) => {
       }}
       scrollEventThrottle={100}>
       <StatusBar backgroundColor={COLORS.white} barStyle="dark-content" />
-      {/* <TouchableOpacity
-        onPress={() => {
-          console.log('search api ', '');
-        }}
-        style={{
-          height: 35,
-          width: '95%',
-          borderColor: '#707070',
-          borderWidth: 1,
-          borderRadius: 5,
-          alignItems: 'center',
-          alignSelf: 'center',
-          marginBottom: 10,
-          marginTop: 15,
-          flexDirection: 'row',
-        }}
-        activeOpacity={0.8}>
-        <Text
-          style={{
-            flex: 1,
-            color: COLORS.darkGray,
-            paddingStart: 10,
-            fontFamily: 'Segoe UI',
-          }}
-          numberOfLines={1}>
-          Search by Restaurant or Dish...
-        </Text>
-        <View
-          style={{
-            marginStart: 8,
-            backgroundColor: 'rgba(112, 112, 112, 255)',
-            height: 18,
-            width: 1,
-            marginEnd: 7,
-          }}
-        />
-        <Image
-          source={icons.search}
-          style={[
-            {
-              width: 20,
-              height: 20,
-              resizeMode: 'center',
-              marginEnd: 10,
-            },
-          ]}
-        />
-      </TouchableOpacity> */}
+      
       {notAvailLocation ? (
         <View
           style={{
@@ -2912,7 +2377,7 @@ const Restaurant = ({navigation}) => {
           </View>
         </View>
       ) : (
-        <>
+        <> 
           {banner?.length <= 0 ? (
             <ShimmerPlaceHolder
               LinearGradient={LinearGradient}
@@ -2925,11 +2390,20 @@ const Restaurant = ({navigation}) => {
               height={200}></ShimmerPlaceHolder>
           ) : (
             <View style={style.sliderMainContainer}>
-              <SwiperFlatList
+               <FlatListSlider 
+            data={banner} 
+            imageKey={'image'}
+            loop={true}
+            autoscroll={false}
+            component={<CustomHomeSlider />}
+
+            />
+              {/* <SwiperFlatList
                 autoplay
                 autoplayDelay={3}
-                autoplayLoop
+                autoplayLoop={true}
                 showPagination
+                
                 data={banner}
                 paginationStyleItem={style.paginationStyleItem}
                 paginationDefaultColor={'#e4e4e4'}
@@ -2949,12 +2423,12 @@ const Restaurant = ({navigation}) => {
                       style={[style.sliderImage]}></ImageBackground>
                     <View style={style.sliderInnerContainer}>
                       <Text style={style.innerText} numberOfLines={1}>
-                        {/* Welcome to ChefLab */}
+                       
                       </Text>
                     </View>
                   </View>
                 )}
-              />
+              /> */}
             </View>
           )}
           {cuisinesData.length <= 0 ? (
@@ -3066,48 +2540,15 @@ const Restaurant = ({navigation}) => {
               </View>
             </View>
           )}
-          {/* <FoodyFeaturedRest
-            smallText={'Sponsored'}
-            heading={`Featured Restaurant`}
-            loading={restHomePageData.length <= 0}
-            items={restHomePageData?.vendors}
-          />
+          
           <View>
-            {restHomePageDataFoody.length > 0 ? (
-              <>
-                <Text
-                  style={[
-                    styles.smallText,
-                    {
-                      marginTop: 15,
-                    },
-                  ]}>
-                  Sponsored
-                </Text>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    width: '100%',
-                  }}>
-                  <Text style={styles.moodText}>Featured Dishes</Text>
-                </View>
-              </>
-            ) : null}
-            <FlatList
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
-              data={restHomePageDataFoody}
-              // extraData={restHomePageDataFoody}
-              renderItem={renderFeaturedDish}
-            />
-          </View> */}
           <FlatList
-            // horizontal={true}
-            showsHorizontalScrollIndicator={false}
-            data={restHomeBlogData || restHomePageData?.blogs}
-            extraData={restHomeBlogData || restHomePageData?.blogs}
-            renderItem={renderDynamicRestBlogPromotion}
-          />
+           showsHorizontalScrollIndicator={false}
+           data={restHomeBlogData || restHomePageData?.blogs}
+           extraData={restHomeBlogData || restHomePageData?.blogs}
+           renderItem={renderDynamicRestBlogPromotion}
+         />
+          </View>
           <View
             style={{
               marginTop: 10,

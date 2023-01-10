@@ -1031,54 +1031,10 @@ const Maps = ({navigation, route}) => {
         scrollEnabled={true}
         zoomEnabled={true}
         minZoomLevel={0} // default => 0
-        maxZoomLevel={20} // default => 20
+        maxZoomLevel={15} // default => 20
         onRegionChange={onRegionChange}
         onRegionChangeComplete={onRegionChangeComplete}>
-        {/* <MapViewDirections
-          origin={{
-            latitude: coordinate?.latitude,
-            longitude: coordinate?.longitude,
-          }}
-          destination={{
-            latitude: coordinate?.latitude,
-            longitude: coordinate?.longitude,
-          }}
-          apikey={apiKey}
-          strokeWidth={0.5}
-          strokeColor={'#00000000'}
-          optimizeWaypoints={true}
-          onReady={result => {
-            // fetchTimeDistance(result.distance, result.duration);
-            mapRef.current.fitToCoordinates(result.coordinates, {
-              edgePadding: {
-                right: 40,
-                bottom: 300,
-                left: 30,
-                top: 100,
-              },
-            });
-          }}
-        /> */}
-        {/* <Marker.Animated
-          // coordinate={{
-          //   latitude: location?.['latitude'] || 22.95569234,
-          //   longitude: location?.['longitude'] || 76.03284881,
-          // }}
-          ref={markerRef}
-          draggable={false}
-          coordinate={coordinate}>
-          <View style={styles.markerContainer}>
-            <LottieView
-              source={Animations.map_pin_animation}
-              style={{
-                height: 50,
-                width: 50,
-              }}
-              autoPlay={true}
-              loop={true}
-            />
-          </View>
-        </Marker.Animated> */}
+        
       </MapView>
       <Modal
         transparent={true}

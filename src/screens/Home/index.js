@@ -1,262 +1,4 @@
-// import React, {useState, useEffect} from 'react';
-// import {
-//   View,
-//   Text,
-//   Image,
-//   ImageBackground,
-//   Modal,
-//   SafeAreaView,
-//   TouchableOpacity,
-//   StatusBar,
-//   ScrollView,
-// } from 'react-native';
-// import {COLORS, icons, SIZES, Animations} from '../../constants/index';
-// import {SwiperFlatList} from 'react-native-swiper-flatlist';
-// import style from './style';
 
-// import LottieView from 'lottie-react-native';
-
-// const Home = ({navigation}) => {
-//   const images = [
-//     {
-//       image:
-//         'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxleHBsb3JlLWZlZWR8OXx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=60',
-//       desc: 'Silent Waters in the mountains in midst of Himilayas',
-//     },
-//     {
-//       image:
-//         'https://images.unsplash.com/photo-1499028344343-cd173ffc68a9?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxleHBsb3JlLWZlZWR8MTV8fHxlbnwwfHx8fA%3D%3D&auto=format&fit=crop&w=500&q=60',
-//       desc: 'Red fort in India New Delhi is a magnificient masterpeiece of humans',
-//     },
-//     {
-//       image:
-//         'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxleHBsb3JlLWZlZWR8Nnx8fGVufDB8fHx8&auto=format&fit=crop&w=500&q=60',
-//       desc: 'Red fort in India New Delhi is a magnificient masterpeiece of humans',
-//     },
-//   ];
-
-//   const [showLiveOrder, setShowLiveOrder] = useState(false);
-
-//   return (
-//     <ScrollView
-//       style={style.mainContainer}
-//       contentContainerStyle={{
-//         flexGrow: 1,
-//       }}>
-//       <StatusBar backgroundColor={COLORS.white} barStyle="dark-content" />
-
-//       <View style={style.header}>
-//         <Image
-//           source={icons.location}
-//           style={[
-//             style.headerImage,
-//             {
-//               marginStart: 15,
-//             },
-//           ]}
-//         />
-//         <View
-//           style={{
-//             flexGrow: 1,
-//           }}>
-//           <View style={style.headerInnerContainer}>
-//             <Text style={style.placeText}>Home</Text>
-//             <Image
-//               source={icons.location_change}
-//               style={{
-//                 resizeMode: 'center',
-//                 marginStart: -8,
-//               }}
-//             />
-//           </View>
-//           <Text style={style.locationText} numberOfLines={1}>
-//             432-B Prem Trade Center, Maharani Road, Indore
-//           </Text>
-//         </View>
-//         <TouchableOpacity
-//           onPress={() => {
-//             navigation.navigate('Cart');
-//           }}>
-//           <Image
-//             source={icons.cart}
-//             style={[
-//               style.headerImage,
-//               {
-//                 marginEnd: 20,
-//               },
-//             ]}
-//           />
-//         </TouchableOpacity>
-//       </View>
-//       <View style={style.sliderMainContainer}>
-//         <SwiperFlatList
-//           autoplay
-//           autoplayDelay={3}
-//           autoplayLoop
-//           showPagination
-//           data={images}
-//           paginationStyleItem={style.paginationStyleItem}
-//           paginationDefaultColor={'#e4e4e4'}
-//           paginationActiveColor={'#707070'}
-//           renderItem={({item}) => (
-//             <View
-//               style={{
-//                 width: SIZES.width,
-//                 justifyContent: 'center',
-//                 alignItems: 'center',
-//                 alignSelf: 'center',
-//               }}>
-//               <ImageBackground
-//                 source={{
-//                   uri: item.image,
-//                 }}
-//                 style={[style.sliderImage]}></ImageBackground>
-//               <View style={style.sliderInnerContainer}>
-//                 <Text style={style.innerText} numberOfLines={1}>
-//                   Welcome to ChefLab
-//                 </Text>
-//               </View>
-//             </View>
-//           )}
-//         />
-//       </View>
-
-//       <Text style={style.moodText}>What 's your mood ?</Text>
-//       <TouchableOpacity
-//         onPress={() => {
-//           navigation.navigate('MainTopNav', {screen: 'Chef'});
-
-//           // navigation.navigate('Chef');
-//         }}
-//         activeOpacity={0.8}
-//         style={style.moodContainer}>
-//         <Text style={style.moodInnerText}>Chef</Text>
-//         <Image source={icons.chef} style={style.moodInnerImage} />
-//       </TouchableOpacity>
-
-//       <TouchableOpacity
-//         onPress={() => {
-//           // navigation.navigate('RestaurantNavigation');
-//           navigation.navigate('MainTopNav', {screen: 'Restaurant'});
-//         }}
-//         activeOpacity={0.8}
-//         style={[
-//           style.moodContainer,
-//           {
-//             backgroundColor: '#6f868e',
-//           },
-//         ]}>
-//         <Text style={style.moodInnerText}>Restaurant</Text>
-//         <Image source={icons.restaurant} style={style.moodInnerImage} />
-//       </TouchableOpacity>
-
-//       <TouchableOpacity
-//         onPress={() => {
-//           // navigation.navigate('DineOut');
-//           navigation.navigate('MainTopNav', {screen: 'Dining'});
-//         }}
-//         activeOpacity={0.8}
-//         style={[
-//           style.moodContainer,
-//           {
-//             backgroundColor: '#f58a65',
-//           },
-//         ]}>
-//         <Text style={style.moodInnerText}>Dining</Text>
-//         <Image
-//           // source={icons.dine_out}
-//           source={{
-//             uri: 'https://cdn-icons-png.flaticon.com/128/906/906208.png',
-//           }}
-//           style={style.moodInnerImage}
-//         />
-//       </TouchableOpacity>
-//       {/* <Text
-//         style={{
-//           fontFamily: 'Segoe UI',
-//           fontSize: 8,
-//           color: COLORS.black,
-//           marginStart: 20,
-//         }}>
-//         we have to change dine out icon
-//       </Text> */}
-//       {!showLiveOrder ? (
-//         <TouchableOpacity
-//           onPress={() => {
-//             setShowLiveOrder(true);
-//           }}
-//           activeOpacity={0.8}
-//           style={[
-//             style.liveOrderOuter,
-//             {
-//               backgroundColor: '#fff',
-//               elevation: 10,
-//               padding: 10,
-//               marginBottom: 5,
-//               flexDirection: 'row',
-//             },
-//           ]}>
-//           <Image
-//             source={{
-//               uri: 'https://cdn-icons-png.flaticon.com/128/6747/6747246.png',
-//             }}
-//             style={[
-//               {width: 25, height: 25, resizeMode: 'center', marginEnd: 10},
-//             ]}
-//           />
-//           <Text
-//             style={[
-//               style.orderStatus,
-//               {marginTop: 0, fontFamily: 'Segoe UI Bold'},
-//             ]}>
-//             Live Order
-//           </Text>
-//         </TouchableOpacity>
-//       ) : null}
-//       {showLiveOrder ? (
-//         <View style={style.liveOrderOuter}>
-//           <TouchableOpacity
-//             onPress={() => {
-//               setShowLiveOrder(false);
-//             }}>
-//             <Image
-//               source={icons.cancel}
-//               style={[
-//                 {width: 25, height: 25, resizeMode: 'center', marginBottom: 5},
-//               ]}
-//             />
-//           </TouchableOpacity>
-//           <View style={style.liveOrderInner}>
-//             <Text style={style.orderStatus}>Live Order Status</Text>
-
-//             <Text style={style.orderName}>Chef Ankur Bajaj</Text>
-
-//             <Text style={style.status}>Out for delivery</Text>
-
-//             <Text style={style.willText}>Will be reached in</Text>
-
-//             <View style={style.countContainer}>
-//               <LottieView
-//                 source={Animations.countdown}
-//                 style={{
-//                   height: 25,
-//                   width: 25,
-//                 }}
-//                 autoPlay={true}
-//                 loop={true}
-//               />
-//               <Text style={style.mins}>ETA: 35 mins</Text>
-//             </View>
-//           </View>
-//         </View>
-//       ) : null}
-//     </ScrollView>
-//   );
-// };
-
-// export default Home;
-
-////////////////////////////////////////////////////////////////////////////////////
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
 import {useIsFocused} from '@react-navigation/native';
@@ -302,6 +44,8 @@ import {API_END_POINTS} from '../../network/ApiEndpoints';
 import CustomEditText from '../../utils/EditText/CustomEditText';
 import {ShowMessage} from '../../utils/Utility';
 import style from './style';
+import {FlatListSlider} from 'react-native-flatlist-slider';
+import CustomHomeSlider from '../../components/CustomHomeSlider'
 var pkg = require('../../../package.json');
 console.log(pkg.version);
 let apiKey = 'AIzaSyACdj2YDqnKhGzGVJPkIYPNhqJPH9_5nVU';
@@ -2417,7 +2161,15 @@ const Home = ({route, navigation}) => {
               height={200}></ShimmerPlaceHolder>
           ) : banner.length == 0 ? null : (
             <View style={style.sliderMainContainer}>
-              <SwiperFlatList
+              <FlatListSlider 
+            data={banner} 
+            imageKey={'image'}
+            loop={true}
+            autoscroll={false}
+            component={<CustomHomeSlider />}
+
+            />
+              {/* <SwiperFlatList
                 autoplay={true}
                 autoplayDelay={3}
                 autoplayLoop={true}
@@ -2442,12 +2194,12 @@ const Home = ({route, navigation}) => {
                       style={[style.sliderImage]}></ImageBackground>
                     <View style={style.sliderInnerContainer}>
                       <Text style={style.innerText} numberOfLines={1}>
-                        {/* Welcome to ChefLab */}
+                       
                       </Text>
                     </View>
                   </View>
                 )}
-              />
+              /> */}
             </View>
           )}
 

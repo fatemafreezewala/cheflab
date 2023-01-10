@@ -55,14 +55,8 @@ const LATITUDE_DELTA = 0.9222;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
 const TrackOrder = ({navigation, route}) => {
-  // const modalRef = useRef<CustomModalRef>();
 
   const myContext = useContext(AppContext);
-
-  // console.log(
-  //   ' myContext?.notificationData > ' +
-  //     JSON.stringify(myContext?.notificationData?.data),
-  // );
   let data = {};
   try {
     data = JSON.parse(myContext?.notificationData?.data?.data || {});
@@ -111,11 +105,6 @@ const TrackOrder = ({navigation, route}) => {
   const [mobile, setMobile] = useState('');
 
   const [remainingSeconds, setRemainingSeconds] = useState(30);
-  // console.log(' remainingSeconds ->> ' + remainingSeconds);
-  // useEffect(() => {
-  // countDown();
-  // }, [remainingSeconds]);
-
   const countDown = () => {
     let interval = setInterval(() => {
       setRemainingSeconds(lastTimerCount => {
