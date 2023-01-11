@@ -2030,7 +2030,7 @@ const TrackOrder = ({navigation, route}) => {
               minZoomLevel={0} // default => 0
               maxZoomLevel={20} // default => 20
             >
-              {/* <MapViewDirections
+              <MapViewDirections
                 origin={{
                   latitude: item?.lat + 0.0 || userLatitude + 0.0,
                   longitude: item?.long + 0.0 || userLongitude + 0.0,
@@ -2049,16 +2049,16 @@ const TrackOrder = ({navigation, route}) => {
                 optimizeWaypoints={true}
                 onReady={result => {
                   // fetchTimeDistance(result.distance, result.duration);
-                  mapRef.current.fitToCoordinates(result.coordinates, {
-                    edgePadding: {
-                      // right: 30,
-                      // bottom: 300,
-                      // left: 30,
-                      // top: 100,
-                    },
-                  });
+                  // mapRef.current.fitToCoordinates(result.coordinates, {
+                  //   edgePadding: {
+                  //     // right: 30,
+                  //     // bottom: 300,
+                  //     // left: 30,
+                  //     // top: 100,
+                  //   },
+                  // });
                 }}
-              /> */}
+              />
               <Marker.Animated
                 // coordinate={{
                 //   latitude: location?.['latitude'] || 22.95569234,
